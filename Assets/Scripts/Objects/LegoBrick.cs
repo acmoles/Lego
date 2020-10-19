@@ -3,17 +3,21 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-public class LegoBrick : Shape
+[RequireComponent(typeof(Shape))]
+public class LegoBrick : MonoBehaviour
 {
+    protected Shape _shape;
+    protected Transform _shapeMesh;
+    Bounds meshBounds;
+    const float importScaleFactor = 100f;
 
+    public bool visualize = true;
 
     List<Vector3> slots = new List<Vector3>();
     List<Vector3> points = new List<Vector3>();
 
     const float halfSize = 1.139775f; // Distance between points?
     const float height = 0.45f;
-
-    Bounds meshBounds;
 
     public LegoBrick attachedTo;
     LegoBrick connectedTo;
@@ -24,29 +28,42 @@ public class LegoBrick : Shape
     Vector3 connecedToLocalPoint;
     Vector3 myLocalSlot;
 
-
-
-    public void Awake()
+        public void Init()
     {
-        meshBounds = meshRenderer.bounds;
+        _shape = GetComponent<Shape>();
+        meshBounds = _shape.meshRenderer.bounds;
+        _shapeMesh = _shape.meshTransform;
 
-        int xCount = (int)Math.Round(meshBounds.extents.x / halfSize);
-        int zCount = (int)Math.Round(meshBounds.extents.z / halfSize);
+        // Compensate for scale
+        float compX = (importScaleFactor * meshBounds.extents.x / _shapeMesh.localScale.x) / halfSize;
+        float compZ = (importScaleFactor * meshBounds.extents.z / _shapeMesh.localScale.z) / halfSize;
+
+        int xCount = (int)Math.Round(compX);
+        int zCount = (int)Math.Round(compZ);
+        Debug.Log("init lego brick: " + xCount + ", " + zCount);
+        //Debug.Log("init lego brick: " + compX + ", " + compZ);
+        //Debug.Log("init lego brick: " + meshBounds);
+
+        float scaledHalfSize = (halfSize * _shapeMesh.localScale.x) / importScaleFactor;
+        float scaledHeight = (height * _shapeMesh.localScale.y) / importScaleFactor;
 
         for (int x = 0; x < xCount; x++)
         {
             for (int z = 0; z < zCount; z++)
             {
-                var slot = meshBounds.min + new Vector3(halfSize + x * halfSize * 2, 0, halfSize + z * halfSize * 2);
+                var slot = meshBounds.min + new Vector3(scaledHalfSize + x * scaledHalfSize * 2, 0, scaledHalfSize + z * scaledHalfSize * 2);
                 slots.Add(slot);
 
                 var point = slot;
                 point.y = meshBounds.max.y;
-                point.y -= height; // Height of a lego brick
+                point.y -= scaledHeight; // Height of a lego brick
                 points.Add(point);
 
-                VisualizePosition.Create(gameObject, point, 1f);
-                VisualizePosition.Create(gameObject, slot, 0.5f);
+                if (visualize)
+                {
+                    VisualizePosition.Create(gameObject, point, 0.01f);
+                    VisualizePosition.Create(gameObject, slot, 0.005f);
+                }
             }
         }
     }
@@ -54,7 +71,7 @@ public class LegoBrick : Shape
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(meshBounds.center, meshBounds.size);
-        Gizmos.DrawWireSphere(meshBounds.center, 0.3f);
+        Gizmos.DrawWireSphere(meshBounds.center, 0.01f);
     }
 
     public Vector3 FindClosestSlot(Vector3 localPosition)

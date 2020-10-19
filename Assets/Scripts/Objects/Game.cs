@@ -64,6 +64,10 @@ public class Game : Persistable
                     levelText.text = loadedScene.buildIndex.ToString();
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
+                    for (int k = 0; k < 20; k++)
+                    {
+                        CreateShape();
+                    }
 
                 } else if (loadedScene.name.Contains("ObjectLevel ") && notInLevel)
                 {
@@ -196,6 +200,8 @@ public class Game : Persistable
     void CreateShape()
     {
         Shape instance = shapeFactory.GetRandom();
+        LegoBrick lb = instance.GetComponent<LegoBrick>();
+        lb.Init();
         Transform t = instance.transform;
         t.localPosition = SpawnZoneLevel.SpawnPoint;
         t.localRotation = Random.rotation;

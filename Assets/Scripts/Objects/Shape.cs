@@ -6,7 +6,9 @@ public class Shape : Persistable
 {
     int shapeId = int.MinValue;
 
+    public GameObject mesh;
     public MeshRenderer meshRenderer;
+    public Transform meshTransform;
 
     public int ShapeId
     {
