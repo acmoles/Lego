@@ -38,12 +38,14 @@ public class Shape : Persistable
         MaterialId = materialId;
     }
 
-    Color color;
+    public Color color { get; set; }
+    Color _color;
     static int colorPropertyId = Shader.PropertyToID("_Color");
     static MaterialPropertyBlock sharedPropertyBlock;
 
     public void SetColor(Color color)
     {
+        _color = this.color;
         this.color = color;
         if (sharedPropertyBlock == null)
         {
@@ -51,6 +53,15 @@ public class Shape : Persistable
         }
         sharedPropertyBlock.SetColor(colorPropertyId, color);
         meshRenderer.SetPropertyBlock(sharedPropertyBlock);
+    }
+
+    public void ResetColor()
+    {
+        if (_color != null)
+        {
+            SetColor(_color);
+            Debug.Log("Reset color");
+        }
     }
 
     public override void Save(DataWriter writer)

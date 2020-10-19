@@ -6,6 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(Shape))]
 public class LegoBrick : MonoBehaviour
 {
+    #region init
     protected Shape _shape;
     protected Transform _shapeMesh;
     Bounds meshBounds;
@@ -18,17 +19,27 @@ public class LegoBrick : MonoBehaviour
 
     const float halfSize = 1.139775f; // Distance between points?
     const float height = 0.45f;
+    #endregion
 
-    public LegoBrick attachedTo;
+    #region interaction
+    static LegoBrick lastLegoBrick;
+
+    Color _color;
+    Transform ghost;
+    bool grasped = false;
+    public float maxConnectionRange = 0.3F;
+
     LegoBrick connectedTo;
+    FixedJoint connectionJoint;
 
     List<LegoBrick> connectedToMe = new List<LegoBrick>();
-    FixedJoint connectionJoint;
+
     LegoBrick connectedToPoint;
     Vector3 connecedToLocalPoint;
     Vector3 myLocalSlot;
+    #endregion
 
-        public void Init()
+    public void Init()
     {
         _shape = GetComponent<Shape>();
         meshBounds = _shape.meshRenderer.bounds;
@@ -40,9 +51,7 @@ public class LegoBrick : MonoBehaviour
 
         int xCount = (int)Math.Round(compX);
         int zCount = (int)Math.Round(compZ);
-        Debug.Log("init lego brick: " + xCount + ", " + zCount);
-        //Debug.Log("init lego brick: " + compX + ", " + compZ);
-        //Debug.Log("init lego brick: " + meshBounds);
+        //Debug.Log("init lego brick: " + xCount + ", " + zCount);
 
         float scaledHalfSize = (halfSize * _shapeMesh.localScale.x) / importScaleFactor;
         float scaledHeight = (height * _shapeMesh.localScale.y) / importScaleFactor;
@@ -72,6 +81,39 @@ public class LegoBrick : MonoBehaviour
     {
         Gizmos.DrawWireCube(meshBounds.center, meshBounds.size);
         Gizmos.DrawWireSphere(meshBounds.center, 0.01f);
+    }
+
+    public void Update()
+    {
+        if (grasped && lastLegoBrick != null && lastLegoBrick != this)
+        {
+            PositionGhost(lastLegoBrick, this.transform.position);
+        }
+    }
+
+    public void onHoverBegin ()
+    {
+        Debug.Log("Same instance? " + (lastLegoBrick == this));
+        if (lastLegoBrick != this)
+        {
+            lastLegoBrick = this;
+        }
+    }
+
+    public void onGraspBegin ()
+    {
+        _shape.SetColor(Color.blue);
+        grasped = true;
+        MakeGhost();
+        // Start positioning ghost
+    }
+
+    public void onGraspEnd ()
+    {
+        grasped = false;
+        _shape.ResetColor();
+        DestroyGhost();
+        // Stop positioning ghost, position actual
     }
 
     public Vector3 FindClosestSlot(Vector3 localPosition)
@@ -106,9 +148,9 @@ public class LegoBrick : MonoBehaviour
         return closestPosition;
     }
 
-    public void VizualizeConnectionTo(LegoBrick other, Vector3 targetPosition)
+    public void PositionGhost(LegoBrick other, Vector3 targetPosition)
     {
-        this.transform.rotation = other.transform.rotation;
+        ghost.transform.rotation = other.transform.rotation;
         connectedToPoint = other;
         connecedToLocalPoint = other.FindClosestPoint(other.transform.InverseTransformPoint(targetPosition));
         Vector3 worldPoint = other.transform.TransformPoint(connecedToLocalPoint);
@@ -116,12 +158,22 @@ public class LegoBrick : MonoBehaviour
         SetPositionMySlotPosition();
     }
 
+    public void MakeGhost()
+    {
+        ghost = Instantiate(_shapeMesh);
+    }
+
+    public void DestroyGhost()
+    {
+        Destroy(ghost.gameObject);
+    }
+
     public void SetPositionMySlotPosition()
     {
         Vector3 worldPoint = connectedToPoint.transform.TransformPoint(connecedToLocalPoint);
-        Vector3 worldSlot = this.transform.TransformPoint(myLocalSlot);
-        transform.position += worldPoint - worldSlot;
-        this.transform.rotation = connectedToPoint.transform.rotation;
+        Vector3 worldSlot = ghost.transform.TransformPoint(myLocalSlot);
+        ghost.transform.position += worldPoint - worldSlot;
+        ghost.transform.rotation = connectedToPoint.transform.rotation;
     }
 
     public void ConnectTo(LegoBrick other)
