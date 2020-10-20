@@ -2,11 +2,28 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using Leap;
+using Leap.Unity.Interaction;
 
 [RequireComponent(typeof(Shape))]
 public class LegoBrick : MonoBehaviour
 {
-    #region init
+    private static HashSet<LegoBrick> _allLegoBricks;
+    public static HashSet<LegoBrick> allLegoBricks
+    {
+        get
+        {
+            if (_allLegoBricks == null)
+            {
+                _allLegoBricks = new HashSet<LegoBrick>();
+            }
+            return _allLegoBricks;
+        }
+    }
+    static LegoBrick lastLegoBrick;
+
+
+
     protected Shape _shape;
     protected Transform _shapeMesh;
     Bounds meshBounds;
@@ -19,25 +36,11 @@ public class LegoBrick : MonoBehaviour
 
     const float halfSize = 1.139775f; // Distance between points?
     const float height = 0.45f;
-    #endregion
 
-    #region interaction
-    static LegoBrick lastLegoBrick;
-
-    Color _color;
-    Transform ghost;
-    bool grasped = false;
-    public float maxConnectionRange = 0.3F;
-
-    LegoBrick connectedTo;
-    FixedJoint connectionJoint;
-
-    List<LegoBrick> connectedToMe = new List<LegoBrick>();
-
-    LegoBrick connectedToPoint;
-    Vector3 connecedToLocalPoint;
-    Vector3 myLocalSlot;
-    #endregion
+    void Awake()
+    {
+        allLegoBricks.Add(this);
+    }
 
     public void Init()
     {
@@ -83,37 +86,226 @@ public class LegoBrick : MonoBehaviour
         Gizmos.DrawWireSphere(meshBounds.center, 0.01f);
     }
 
+
+    public InteractionBehaviour interactionBehaviour;
+
+    bool _grasped = false;
+    public float maxGhostDistance = 0.1f;
+    LegoBrick connectedToHover;
+
+    LegoBrick connectedTo;
+    FixedJoint connectionJoint;
+    List<LegoBrick> connectedToMe = new List<LegoBrick>();
+
+    bool _connecting = false;
+
     public void Update()
     {
-        if (grasped && lastLegoBrick != null && lastLegoBrick != this)
+        if (_grasped && lastLegoBrick != null && lastLegoBrick != this)
         {
             PositionGhost(lastLegoBrick, this.transform.position);
         }
+        //else if (_grasped && lastLegoBrick == null)
+        //{
+        //    DestroyGhost();
+        //} else if (_grasped && lastLegoBrick != null)
+        //{
+        //    MakeGhost();
+        //}
+        //UpdateConnectionTo();
     }
 
-    public void onHoverBegin ()
+    public LegoBrick FindPreferredLegoBrick()
     {
-        Debug.Log("Same instance? " + (lastLegoBrick == this));
-        if (lastLegoBrick != this)
+        LegoBrick preferredLegoBrick = null;
+        float closestDistSqrd = float.PositiveInfinity;
+        foreach (var brick in allLegoBricks)
         {
-            lastLegoBrick = this;
+            float testDistanceSqrd = (brick.transform.position - this.transform.position).sqrMagnitude;
+            if (testDistanceSqrd < closestDistSqrd && brick != this && brick != connectedTo && !connectedToMe.Contains(brick))
+            {
+                preferredLegoBrick = brick;
+                closestDistSqrd = testDistanceSqrd;
+            }
+        }
+
+        if (closestDistSqrd < maxGhostDistance * maxGhostDistance)
+        {
+            // Visualise selection
+            Debug.DrawLine(this.transform.position, preferredLegoBrick.transform.position, Color.red);
+            return preferredLegoBrick;
+        } else
+        {
+            return null;
         }
     }
 
     public void onGraspBegin ()
     {
-        _shape.SetColor(Color.blue);
-        grasped = true;
+        _shape.SetColor(Color.magenta);
+        _grasped = true;
         MakeGhost();
-        // Start positioning ghost
+    }
+
+    public void onGraspStay ()
+    {
+        lastLegoBrick = FindPreferredLegoBrick();
     }
 
     public void onGraspEnd ()
     {
-        grasped = false;
+        _grasped = false;
         _shape.ResetColor();
-        DestroyGhost();
-        // Stop positioning ghost, position actual
+
+        // Start connection at Ghost
+        if (_ghosting)
+        {
+            DestroyGhost();
+            ConnectTo(connectedToHover);
+
+            //_connecting = true;
+        }
+    }
+
+    public void onHoverBegin()
+    {
+        //Debug.Log("Same instance? " + (lastLegoBrick == this));
+        //if (lastLegoBrick != this)
+        //{
+        //    lastLegoBrick = this;
+        //}
+        //_shape.SetColor(Color.cyan);
+    }
+
+    public void onHoverEnd()
+    {
+        //_shape.ResetColor();
+    }
+
+    public void PositionGhost(LegoBrick other, Vector3 targetPosition)
+    {
+        if (ghost == null)
+        {
+            return;
+        }
+        connectedToHover = other;
+
+        Vector3 connectedToHoverPreferredLocalPoint = other.FindClosestPoint(other.transform.InverseTransformPoint(targetPosition));
+        Vector3 worldPoint = other.transform.TransformPoint(connectedToHoverPreferredLocalPoint);
+        Vector3 myHoverPreferredLocalSlot = FindClosestSlot(transform.InverseTransformPoint(worldPoint));
+        Vector3 worldSlot = ghost.transform.TransformPoint(myHoverPreferredLocalSlot);
+        ghost.transform.position += worldPoint - worldSlot;
+        ghost.transform.rotation = other.transform.rotation;
+    }
+
+    Vector3 _ghostPosition;
+    Quaternion _ghostRotation;
+
+    public void ConnectTo(LegoBrick other)
+    {
+        if (other == null)
+        {
+            return;
+        }
+
+        //var p = transform.position;
+
+        Disconnect();
+
+        connectedTo = other;
+
+        this.transform.position = _ghostPosition;
+        this.transform.rotation = _ghostRotation;
+
+        //GetComponent<BoxCollider>().enabled = true;
+        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
+
+        //transform.position = p;
+
+        connectionJoint = gameObject.AddComponent<FixedJoint>();
+        connectionJoint.connectedBody = connectedTo.GetComponent<Rigidbody>();
+
+        //transform.position = p;
+
+        connectedTo.connectedToMe.Add(this);
+
+        //PositionWarped();
+        Debug.Log("Connection!");
+    }
+
+    public void Disconnect()
+    {
+        if (!IsConnected()) return;
+
+        Destroy(connectionJoint);
+
+        //Physics.IgnoreCollision(GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
+
+        connectedTo.connectedToMe.Remove(this);
+    }
+
+
+    [Range(0, 100F)]
+    public float lerpSpeed = 20f;
+
+    public void UpdateConnectionTo()
+    {
+        if (!_connecting)
+        {
+            return;
+        }
+        // Initialize position and rotation.
+        Vector3 finalPosition;
+        Quaternion finalRotation;
+        if (interactionBehaviour != null)
+        {
+            finalPosition = interactionBehaviour.rigidbody.position;
+            finalRotation = interactionBehaviour.rigidbody.rotation;
+        }
+        else
+        {
+            finalPosition = this.transform.position;
+            finalRotation = this.transform.rotation;
+        }
+
+        Vector3 targetPosition = ghost.transform.position;
+        Quaternion targetRotation = ghost.transform.rotation;
+        finalPosition = Vector3.Lerp(finalPosition, targetPosition, lerpSpeed * Time.deltaTime);
+        finalRotation = Quaternion.Slerp(finalRotation, targetRotation, lerpSpeed * 0.8f * Time.deltaTime);
+        if (Vector3.Distance(finalPosition, targetPosition) < 0.001f && Quaternion.Angle(targetRotation, finalRotation) < 2F)
+        {
+            _connecting = false;
+            DestroyGhost();
+            ConnectTo(connectedToHover);
+        }
+
+        // Set final position.
+        if (interactionBehaviour != null)
+        {
+            interactionBehaviour.rigidbody.position = finalPosition;
+            this.transform.position = finalPosition;
+            interactionBehaviour.rigidbody.rotation = finalRotation;
+            this.transform.rotation = finalRotation;
+        }
+        else
+        {
+            this.transform.position = finalPosition;
+            this.transform.rotation = finalRotation;
+        }
+
+        // Fade out ghost
+        float alpha = ghostRenderer.material.GetFloat("Alpha");
+        float finalAlpha = Mathf.Lerp(alpha, 0f, lerpSpeed * Time.deltaTime);
+        ghostRenderer.material.SetFloat("Alpha", finalAlpha);
+    }
+
+    public void PositionWarped()
+    {
+        foreach (var lp in connectedToMe)
+        {
+            //lp.SetPositionGhost();
+            lp.PositionWarped();
+        }
     }
 
     public Vector3 FindClosestSlot(Vector3 localPosition)
@@ -148,79 +340,45 @@ public class LegoBrick : MonoBehaviour
         return closestPosition;
     }
 
-    public void PositionGhost(LegoBrick other, Vector3 targetPosition)
-    {
-        ghost.transform.rotation = other.transform.rotation;
-        connectedToPoint = other;
-        connecedToLocalPoint = other.FindClosestPoint(other.transform.InverseTransformPoint(targetPosition));
-        Vector3 worldPoint = other.transform.TransformPoint(connecedToLocalPoint);
-        myLocalSlot = this.FindClosestSlot(this.transform.InverseTransformPoint(worldPoint));
-        SetPositionMySlotPosition();
-    }
+    bool _ghosting;
+    Transform ghost;
+    MeshRenderer ghostRenderer;
+    public Material ghostMaterial;
 
     public void MakeGhost()
     {
+        _ghosting = true;
         ghost = Instantiate(_shapeMesh);
+        ghost.name = "Ghost";
+        var list = GetComponents(typeof(Component));
+        for (int i = 0; i < list.Length; i++)
+        {
+            Debug.Log(list[i].name);
+        }
+        ghostRenderer = ghost.GetComponent<MeshRenderer>();
+        ghostRenderer.material = ghostMaterial;
     }
 
     public void DestroyGhost()
     {
-        Destroy(ghost.gameObject);
-    }
-
-    public void SetPositionMySlotPosition()
-    {
-        Vector3 worldPoint = connectedToPoint.transform.TransformPoint(connecedToLocalPoint);
-        Vector3 worldSlot = ghost.transform.TransformPoint(myLocalSlot);
-        ghost.transform.position += worldPoint - worldSlot;
-        ghost.transform.rotation = connectedToPoint.transform.rotation;
-    }
-
-    public void ConnectTo(LegoBrick other)
-    {
-        var p = transform.position;
-
-        Disconnect();
-
-        connectedTo = other;
-
-        GetComponent<BoxCollider>().enabled = true;
-        Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
-
-        transform.position = p;
-
-        connectionJoint = gameObject.AddComponent<FixedJoint>();
-        connectionJoint.connectedBody = connectedTo.GetComponent<Rigidbody>();
-
-        transform.position = p;
-
-        connectedTo.connectedToMe.Add(this);
-
-        PositionWarped();
-    }
-
-    public void PositionWarped()
-    {
-        foreach (var lp in connectedToMe)
+        if (_ghosting)
         {
-            lp.SetPositionMySlotPosition();
-            lp.PositionWarped();
+            _ghosting = false;
+            _ghostPosition = ghost.transform.position;
+            _ghostRotation = ghost.transform.rotation;
+            Destroy(ghost.gameObject);
+            ghost = null;
+            ghostRenderer = null;
+            Debug.Log("Destroy Ghost");
+        }
+            else
+        {
+            Debug.LogWarning("Already destroyed ghost. " + ghost);
         }
     }
 
     public bool IsConnected()
     {
         return connectedTo != null;
-    }
-
-    public void Disconnect()
-    {
-        if (!IsConnected()) return;
-
-        Destroy(connectionJoint);
-
-        Physics.IgnoreCollision(GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
-
-        connectedTo.connectedToMe.Remove(this);
     }
 }
