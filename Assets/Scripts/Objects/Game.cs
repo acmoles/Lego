@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.IO;
 using TMPro;
+using Leap.Unity.Interaction;
 
 public class Game : Persistable
 {
@@ -20,6 +21,7 @@ public class Game : Persistable
     int loadedLevelBuildIndex = 0;
 
     public TextMeshProUGUI levelText;
+    public InteractionManager manager;
 
     [SerializeField] KeyCode create = KeyCode.C;
     [SerializeField] KeyCode reset = KeyCode.N;
@@ -68,6 +70,7 @@ public class Game : Persistable
                     {
                         CreateShape();
                     }
+                    CreatePlate();
 
                 } else if (loadedScene.name.Contains("ObjectLevel ") && notInLevel)
                 {
@@ -212,6 +215,19 @@ public class Game : Persistable
             valueMin: 0.25f, valueMax: 1f,
             alphaMin: 1f, alphaMax: 1f
         ));
+        shapes.Add(instance);
+    }
+
+    void CreatePlate() {
+        Debug.Log("Create plate");
+        Shape instance = shapeFactory.GetPlate();
+        LegoBrick lb = instance.GetComponent<LegoBrick>();
+        lb.Init();
+        Transform t = instance.transform;
+        Vector3 position = new Vector3(0f, 1.455f, 0.2f);
+        t.localPosition = position;
+        instance.SetColor(Color.white);
+
         shapes.Add(instance);
     }
 

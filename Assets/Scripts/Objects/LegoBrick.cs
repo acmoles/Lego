@@ -30,6 +30,7 @@ public class LegoBrick : MonoBehaviour
     const float importScaleFactor = 100f;
 
     public bool visualize = true;
+    public bool kinemetic = false;
 
     List<Vector3> slots = new List<Vector3>();
     List<Vector3> points = new List<Vector3>();
@@ -39,7 +40,9 @@ public class LegoBrick : MonoBehaviour
 
     void Awake()
     {
+        if (kinemetic) GetComponent<Rigidbody>().isKinematic = true;
         allLegoBricks.Add(this);
+        interactionBehaviour.manager = Game.Instance.manager;
     }
 
     public void Init()
@@ -73,6 +76,7 @@ public class LegoBrick : MonoBehaviour
 
                 if (visualize)
                 {
+                    Debug.Log("Visualize");
                     VisualizePosition.Create(gameObject, point, 0.01f);
                     VisualizePosition.Create(gameObject, slot, 0.005f);
                 }
@@ -105,13 +109,7 @@ public class LegoBrick : MonoBehaviour
         {
             PositionGhost(lastLegoBrick, this.transform.position);
         }
-        //else if (_grasped && lastLegoBrick == null)
-        //{
-        //    DestroyGhost();
-        //} else if (_grasped && lastLegoBrick != null)
-        //{
-        //    MakeGhost();
-        //}
+
         //UpdateConnectionTo();
     }
 
@@ -132,10 +130,12 @@ public class LegoBrick : MonoBehaviour
         if (closestDistSqrd < maxGhostDistance * maxGhostDistance)
         {
             // Visualise selection
+            MakeGhost();
             Debug.DrawLine(this.transform.position, preferredLegoBrick.transform.position, Color.red);
             return preferredLegoBrick;
         } else
         {
+            DestroyGhost();
             return null;
         }
     }
@@ -144,7 +144,6 @@ public class LegoBrick : MonoBehaviour
     {
         _shape.SetColor(Color.magenta);
         _grasped = true;
-        MakeGhost();
     }
 
     public void onGraspStay ()
@@ -162,7 +161,6 @@ public class LegoBrick : MonoBehaviour
         {
             DestroyGhost();
             ConnectTo(connectedToHover);
-
             //_connecting = true;
         }
     }
@@ -184,7 +182,7 @@ public class LegoBrick : MonoBehaviour
 
     public void PositionGhost(LegoBrick other, Vector3 targetPosition)
     {
-        if (ghost == null)
+        if (_ghosting == false)
         {
             return;
         }
@@ -208,7 +206,6 @@ public class LegoBrick : MonoBehaviour
             return;
         }
 
-        //var p = transform.position;
 
         Disconnect();
 
@@ -218,14 +215,10 @@ public class LegoBrick : MonoBehaviour
         this.transform.rotation = _ghostRotation;
 
         //GetComponent<BoxCollider>().enabled = true;
-        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
-
-        //transform.position = p;
+        Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
 
         connectionJoint = gameObject.AddComponent<FixedJoint>();
         connectionJoint.connectedBody = connectedTo.GetComponent<Rigidbody>();
-
-        //transform.position = p;
 
         connectedTo.connectedToMe.Add(this);
 
@@ -239,9 +232,10 @@ public class LegoBrick : MonoBehaviour
 
         Destroy(connectionJoint);
 
-        //Physics.IgnoreCollision(GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
+        Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
 
         connectedTo.connectedToMe.Remove(this);
+        connectedTo = null;
     }
 
 
@@ -340,28 +334,26 @@ public class LegoBrick : MonoBehaviour
         return closestPosition;
     }
 
-    bool _ghosting;
+    bool _ghosting = false;
     Transform ghost;
     MeshRenderer ghostRenderer;
     public Material ghostMaterial;
 
     public void MakeGhost()
     {
-        _ghosting = true;
-        ghost = Instantiate(_shapeMesh);
-        ghost.name = "Ghost";
-        var list = GetComponents(typeof(Component));
-        for (int i = 0; i < list.Length; i++)
+        if (!_ghosting)
         {
-            Debug.Log(list[i].name);
+            _ghosting = true;
+            ghost = Instantiate(_shapeMesh);
+            ghost.name = "Ghost";
+            ghostRenderer = ghost.GetComponent<MeshRenderer>();
+            ghostRenderer.material = ghostMaterial;
         }
-        ghostRenderer = ghost.GetComponent<MeshRenderer>();
-        ghostRenderer.material = ghostMaterial;
     }
 
     public void DestroyGhost()
     {
-        if (_ghosting)
+        if (_ghosting && ghost != null)
         {
             _ghosting = false;
             _ghostPosition = ghost.transform.position;
@@ -371,14 +363,47 @@ public class LegoBrick : MonoBehaviour
             ghostRenderer = null;
             Debug.Log("Destroy Ghost");
         }
-            else
-        {
-            Debug.LogWarning("Already destroyed ghost. " + ghost);
-        }
     }
 
     public bool IsConnected()
     {
         return connectedTo != null;
     }
+
+    public void EndVisualize()
+    {
+        gameObject.GetComponent<BoxCollider>().enabled = true;
+        gameObject.GetComponent<Rigidbody>().isKinematic = false;
+    }
+    public void StartVisualize()
+    {
+        gameObject.GetComponent<BoxCollider>().enabled = false;
+        gameObject.GetComponent<Rigidbody>().isKinematic = true;
+    }
 }
+
+/*
+ * TODO
+ * 
+ * - Make procedural lego piece
+ * 
+ * - Make position class
+ * - It should have a list of 'positions' with type 'point' and 'slot'
+ * - They should know when they're occupied (and not be preferred) occupied = true/false
+ * 
+ * - Update preferred hand method to take into account target bounding box
+ * 
+ * - Fix fixed joint to make it actually solid
+ * 
+ *
+ * 
+ * 
+ * Ghosting logic when grasping
+ * - Which brick is preferred (ray to brick) - other color
+ * - Which position on brick is preferred (ray from brick to position)
+ * - Which position on grasped brick is preferred (ray from brick to grasped brick position)
+ * - If first pref is top, second must be bottom (check in loop over positions)
+ * 
+ */
+
+

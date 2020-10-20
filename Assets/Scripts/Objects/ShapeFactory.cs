@@ -11,6 +11,9 @@ public class ShapeFactory : ScriptableObject
     Shape[] prefabs;
 
     [SerializeField]
+    Shape platePrefab;
+
+    [SerializeField]
     Material[] materials;
 
     [SerializeField]
@@ -58,6 +61,15 @@ public class ShapeFactory : ScriptableObject
     {
         return Get(Random.Range(0, prefabs.Length), Random.Range(0, materials.Length));
         // Random.Range has an exclusive maximum (n-1) with integer params (inclusive for float)
+        // -1 to remove plate
+    }
+
+    public Shape GetPlate()
+    {
+        Shape instance = Instantiate(platePrefab);
+        int materialId = Random.Range(0, materials.Length);
+        instance.SetMaterial(materials[materialId], materialId);
+        return instance;
     }
 
     void CreatePools()

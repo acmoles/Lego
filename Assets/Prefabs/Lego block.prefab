@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1520303961235045951}
   - component: {fileID: 470085883955476473}
   - component: {fileID: 4356196550370558361}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Lego block
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -80,7 +80,7 @@ MonoBehaviour:
   _manager: {fileID: 0}
   _ignoreHoverMode: 0
   _isIgnoringAllHoverState: 0
-  _ignorePrimaryHover: 0
+  _ignorePrimaryHover: 1
   _ignoreContact: 0
   _ignoreGrasping: 0
   _contactForceMode: 0
@@ -89,10 +89,10 @@ MonoBehaviour:
   graspedMovementType: 0
   _overrideInteractionLayer: 0
   _interactionLayer:
-    layerIndex: 0
+    layerIndex: 11
   _overrideNoContactLayer: 0
   _noContactLayer:
-    layerIndex: 0
+    layerIndex: 12
   _eventTable:
     _entries:
     - enumValue: 140
@@ -203,6 +203,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   visualize: 0
+  kinemetic: 0
   interactionBehaviour: {fileID: 1520303961235045951}
   maxGhostDistance: 0.1
   lerpSpeed: 20
