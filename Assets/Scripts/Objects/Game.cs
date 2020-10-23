@@ -66,7 +66,7 @@ public class Game : Persistable
                     levelText.text = loadedScene.buildIndex.ToString();
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
-                    for (int k = 0; k < 20; k++)
+                    for (int k = 0; k < 10; k++)
                     {
                         CreateShape();
                     }

@@ -22,10 +22,11 @@ public class LegoBrick : MonoBehaviour
     }
     static LegoBrick lastLegoBrick;
 
-    private class Position
+    public class LocalGrid
     {
-        Vector3 position { get; set; }
-
+        public Vector3 position;
+        public string type;
+        public bool available = true;
     }
 
     protected Shape _shape;
@@ -38,6 +39,7 @@ public class LegoBrick : MonoBehaviour
 
     List<Vector3> slots = new List<Vector3>();
     List<Vector3> points = new List<Vector3>();
+    List<LocalGrid> positions = new List<LocalGrid>();
 
     const float halfSize = 1.139775f; // Distance between points?
     const float height = 0.45f;
@@ -56,6 +58,8 @@ public class LegoBrick : MonoBehaviour
         meshBounds = _shape.meshRenderer.bounds;
         _shapeMesh = _shape.meshTransform;
 
+
+
         // Compensate for scale
         float compX = (importScaleFactor * meshBounds.extents.x / _shapeMesh.localScale.x) / halfSize;
         float compZ = (importScaleFactor * meshBounds.extents.z / _shapeMesh.localScale.z) / halfSize;
@@ -67,23 +71,36 @@ public class LegoBrick : MonoBehaviour
         float scaledHalfSize = (halfSize * _shapeMesh.localScale.x) / importScaleFactor;
         float scaledHeight = (height * _shapeMesh.localScale.y) / importScaleFactor;
 
+        VisualizePosition.Create(gameObject, new Vector3(meshBounds.min.x + scaledHalfSize, meshBounds.max.y - scaledHeight, meshBounds.min.z + scaledHalfSize), 0.02f);
+
         for (int x = 0; x < xCount; x++)
         {
             for (int z = 0; z < zCount; z++)
             {
-                var slot = meshBounds.min + new Vector3(scaledHalfSize + x * scaledHalfSize * 2, 0, scaledHalfSize + z * scaledHalfSize * 2);
-                slots.Add(slot);
+                var slot1 = meshBounds.min + new Vector3(scaledHalfSize + x * scaledHalfSize * 2, 0, scaledHalfSize + z * scaledHalfSize * 2);
+                slots.Add(slot1);
 
-                var point = slot;
-                point.y = meshBounds.max.y;
-                point.y -= scaledHeight; // Height of a lego brick
-                points.Add(point);
+                var point1 = slot1;
+                point1.y = meshBounds.max.y;
+                point1.y -= scaledHeight; // Height of a lego brick
+                points.Add(point1);
+
+
+                var slot = new LocalGrid();
+                slot.position = meshBounds.min + new Vector3(scaledHalfSize + x * scaledHalfSize * 2, 0, scaledHalfSize + z * scaledHalfSize * 2);
+                slot.type = "slot";
+                positions.Add(slot);
+
+                var point = new LocalGrid();
+                point.position = slot.position;
+                point.position.y = meshBounds.max.y;
+                point.position.y -= scaledHeight; // Height of a lego brick
+                positions.Add(point);
 
                 if (visualize)
                 {
-                    Debug.Log("Visualize");
-                    VisualizePosition.Create(gameObject, point, 0.01f);
-                    VisualizePosition.Create(gameObject, slot, 0.005f);
+                    VisualizePosition.Create(gameObject, point.position, 0.01f);
+                    VisualizePosition.Create(gameObject, slot.position, 0.005f);
                 }
             }
         }
@@ -112,7 +129,7 @@ public class LegoBrick : MonoBehaviour
     {
         if (_grasped && lastLegoBrick != null && lastLegoBrick != this)
         {
-            PositionGhost(lastLegoBrick, this.transform.position);
+            PositionGhost(lastLegoBrick);
         }
 
         //UpdateConnectionTo();
@@ -138,7 +155,7 @@ public class LegoBrick : MonoBehaviour
         {
             // Visualise selection
             MakeGhost();
-            Debug.DrawLine(this.transform.position, preferredLegoBrick.transform.position, Color.red);
+            //Debug.DrawLine(this.transform.position, preferredLegoBrick.transform.position, Color.red);
             return preferredLegoBrick;
         } else
         {
@@ -192,9 +209,7 @@ public class LegoBrick : MonoBehaviour
         //_shape.ResetColor();
     }
 
-    public Vector3 axis;
-
-    public void PositionGhost(LegoBrick other, Vector3 targetPosition)
+    public void PositionGhost(LegoBrick other)
     {
         if (_ghosting == false)
         {
@@ -203,11 +218,11 @@ public class LegoBrick : MonoBehaviour
         connectedToHover = other;
 
         // Position
-
-        Vector3 otherPreferredLocalPoint = other.FindClosestPoint(other.transform.InverseTransformPoint(targetPosition));
+        //Vector3 myClosestPointToOther = GetComponent<Collider>().ClosestPoint(other.transform.position);
+        Vector3 otherPreferredLocalPoint = other.FindClosestPoint(other.transform.InverseTransformPoint(this.transform.position));
         Vector3 worldPoint = other.transform.TransformPoint(otherPreferredLocalPoint);
 
-        // Hmmm
+        //
         Vector3 ghostHoverPreferredLocalSlot = FindClosestSlot(ghost.transform.InverseTransformPoint(worldPoint));
         Vector3 worldSlot = ghost.transform.TransformPoint(ghostHoverPreferredLocalSlot);
 
@@ -216,32 +231,56 @@ public class LegoBrick : MonoBehaviour
         Vector3 myWorldSlot = transform.TransformPoint(myHoverPreferredLocalSlot);
         Debug.DrawLine(worldPoint, myWorldSlot, Color.yellow);
 
+        ghost.transform.position += worldPoint - worldSlot;
+
+
         // Rotation
 
-        // Must always be xz plane
-        Vector3 alignedForward = NearestLegoAxis(transform.forward);
+        // Must always be xz plane (world)
+        Vector3 alignedForward = NearestLegoWorldAxis(transform.forward);
         if (alignedForward.x == 0 && alignedForward.z == 0)
         {
             Debug.Log("! alignForward problem: " + alignedForward);
             alignedForward = new Vector3(1, 0, 0);
         }
-
-        axis = alignedForward;
-
-        // Must always be up/down (world or local)
+        
+        // Must always be up/down (world)
         Vector3 alignedUp = Vector3.up;
-
-        Quaternion worldRotation = Quaternion.LookRotation(alignedForward, alignedUp);
-        Quaternion localRotation = Quaternion.LookRotation(other.axis, alignedUp);
-
         Debug.DrawRay(worldPoint, alignedUp, Color.cyan);
         Debug.DrawRay(worldPoint, alignedForward, Color.cyan);
 
-        ghost.transform.position += worldPoint - worldSlot;
-        //ghost.transform.rotation = worldRotation * other.transform.rotation;
-        ghost.transform.rotation = other.transform.rotation * worldRotation * Quaternion.Inverse(localRotation);
+        // Find nearest non-vertical local axis in other to alignForward
+        Vector3 otherNearestAxis = NearestLegoLocalDirection(alignedForward, other.transform);
+
+        Debug.DrawRay(other.transform.position, otherNearestAxis, Color.red);
+        Debug.DrawRay(other.transform.position, other.transform.up, Color.red);
+
+        // Make that forward direction for LookRotation
+        Quaternion otherLocalRotation = Quaternion.LookRotation(otherNearestAxis, other.transform.up);
+
+        ghost.transform.rotation = otherLocalRotation;
+
 
         // ghost.transform.rotation = other.transform.rotation;
+    }
+
+    public Vector3 NearestLegoLocalDirection(Vector3 worldDirection, Transform localTransform) {
+
+        // Not up/down since lego plane
+        Vector3[] compass = { localTransform.right, -localTransform.right, localTransform.forward, -localTransform.forward };
+        //, localTransform.up, -localTransform.up
+        var maxDot = -Mathf.Infinity;
+        var ret = Vector3.zero;
+     
+        foreach (Vector3 dir in compass) { 
+            var t = Vector3.Dot(worldDirection, dir);
+            if (t > maxDot) {
+                ret = dir;
+                maxDot = t;
+            }
+        }
+ 
+        return ret;
     }
 
     private static Vector3 NearestWorldAxis(Vector3 v)
@@ -266,7 +305,7 @@ public class LegoBrick : MonoBehaviour
         return v;
     }
 
-    private static Vector3 NearestLegoAxis(Vector3 v)
+    private static Vector3 NearestLegoWorldAxis(Vector3 v)
     {
         v.y = 0;
         if (Mathf.Abs(v.x) < Mathf.Abs(v.z))
@@ -408,6 +447,26 @@ public class LegoBrick : MonoBehaviour
         }
     }
 
+    public bool CheckOccupiedGridPosition()
+    {
+        return false;
+    }
+
+    public LocalGrid FindClosestPosition(LocalGrid targetPosition) {
+        LocalGrid preferredPosition = null;
+        float closestDistSqrd = float.PositiveInfinity;
+        foreach (var gridPosition in positions)
+        {
+            float testDistanceSqrd = (gridPosition.position - this.transform.position).sqrMagnitude;
+            if (testDistanceSqrd < closestDistSqrd && gridPosition.type != targetPosition.type)
+            {
+                preferredPosition = gridPosition;
+                closestDistSqrd = testDistanceSqrd;
+            }
+        }
+        return preferredPosition;
+    }
+
     public Vector3 FindClosestSlot(Vector3 localPosition)
     {
         var closestPosition = slots[0];
@@ -422,11 +481,6 @@ public class LegoBrick : MonoBehaviour
             }
         }
         return closestPosition;
-    }
-
-    public bool CheckOccupiedPoint()
-    {
-        return false;
     }
 
     public Vector3 FindClosestPoint(Vector3 localPosition)
