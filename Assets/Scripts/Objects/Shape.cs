@@ -60,7 +60,7 @@ public class Shape : Persistable
         if (_color != null)
         {
             SetColor(_color);
-            Debug.Log("Reset color");
+            //Debug.Log("Reset color");
         }
     }
 

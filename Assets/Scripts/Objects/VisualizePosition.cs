@@ -13,12 +13,15 @@ public class VisualizePosition : ScriptableObject
         sphere.GetComponent<MeshRenderer>().material.color = new Color(0.71f, 0.80f, 0.49f);
         sphere.transform.localScale = new Vector3(size, size, size);
         sphere.transform.position = targetsLocalPosition;
-        sphere.transform.parent = target.transform;
+        if (target)
+        {
+            sphere.transform.parent = target.transform;
+        }
 
         //var vp = sphere.AddComponent<VisualizePosition>();
         //vp.target = target;
         //vp.targetsLocalPosition = targetsLocalPosition;
-        
+
     }
 
     //void Update()
