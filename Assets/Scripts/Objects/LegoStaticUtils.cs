@@ -116,12 +116,24 @@ public static class LegoStaticUtils
                 float testDistance = (otherPoints[i] - mySlots[j]).magnitude;
                 if (testDistance < shortDistance)
                 {
-                    other.points[i].available = false;
+                    other.points[i].available = !other.points[i].available;
                     //VisualizePosition.Create(null, otherPoints[i], 0.01f);
                 }
             }
         }
 
+    }
+
+    public static int FindLegoDepth(LegoBrick brick)
+    {
+        LegoBrick b = brick;
+        int depth = 0;
+        while (b != null)
+        {
+            depth++;
+            b = b.connectedTo;
+        }
+        return depth;
     }
 
 }

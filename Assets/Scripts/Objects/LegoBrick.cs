@@ -28,24 +28,25 @@ public class LegoBrick : MonoBehaviour
     const float importScaleFactor = 100f;
 
     public bool visualize = true;
-    public bool kinemetic = false;
+    public bool kinematic = false;
 
     public List<LocalPosition> slots = new List<LocalPosition>();
     public List<LocalPosition> points = new List<LocalPosition>();
 
     const float halfSize = 1.139775f; // Distance between points
     const float height = 0.45f;
+    const float mass = 0.1f;
 
     void Awake()
     {
-        if (kinemetic) GetComponent<Rigidbody>().isKinematic = true;
+        if (kinematic) GetComponent<Rigidbody>().isKinematic = true;
         allLegoBricks.Add(this);
         interactionBehaviour.manager = Game.Instance.manager;
     }
 
     public void Init()
     {
-        gameObject.GetComponent<Rigidbody>().mass = .1f;
+        gameObject.GetComponent<Rigidbody>().mass = mass;
         _shape = GetComponent<Shape>();
         meshBounds = _shape.meshRenderer.bounds;
         _shapeMesh = _shape.meshTransform;
@@ -60,8 +61,8 @@ public class LegoBrick : MonoBehaviour
 
         float scaledHalfSize = (halfSize * _shapeMesh.localScale.x) / importScaleFactor;
         float scaledHeight = (height * _shapeMesh.localScale.y) / importScaleFactor;
-
-        VisualizePosition.Create(gameObject, new Vector3(meshBounds.min.x + scaledHalfSize, meshBounds.max.y - scaledHeight, meshBounds.min.z + scaledHalfSize), 0.02f);
+        
+        if (visualize) VisualizePosition.Create(gameObject, new Vector3(meshBounds.min.x + scaledHalfSize, meshBounds.max.y - scaledHeight, meshBounds.min.z + scaledHalfSize), 0.02f);
 
         for (int x = 0; x < xCount; x++)
         {
@@ -112,20 +113,17 @@ public class LegoBrick : MonoBehaviour
 
     bool _grasped = false;
     public float maxGhostDistance = 0.1f;
-    LegoBrick connectedToHover;
+    LegoBrick hoverTarget;
 
-    LegoBrick connectedTo;
-    FixedJoint connectionJoint;
+    public LegoBrick connectedTo;
+    ConfigurableJoint connectionJoint;
     List<LegoBrick> connectedToMe = new List<LegoBrick>();
 
     bool _connecting = false;
 
     public void Update()
     {
-        if (_grasped && preferredLegoBrick != null && preferredLegoBrick != this)
-        {
-            PositionGhost(preferredLegoBrick);
-        }
+        PositionGhost();
         UpdateConnectionTo();
     }
 
@@ -151,7 +149,7 @@ public class LegoBrick : MonoBehaviour
 
         // Nearby brick below
         var ray = new Ray(transform.position, -transform.up);
-        Debug.DrawRay(transform.position, -transform.up, Color.white);
+        if (visualize) Debug.DrawRay(transform.position, -transform.up, Color.white);
         RaycastHit raycastHit;
         if (Physics.Raycast(ray, out raycastHit))
         {
@@ -161,7 +159,7 @@ public class LegoBrick : MonoBehaviour
                 float belowDistSqrd = (hitBrick.transform.position - transform.position).sqrMagnitude;
 
                 // Choose which to use, preferring below bricks
-                if (belowDistSqrd < 10*closestDistSqrd)
+                if (belowDistSqrd < 100*closestDistSqrd)
                 {
                     preferredLegoBrick = hitBrick;
                     closestDistSqrd = belowDistSqrd;
@@ -172,7 +170,7 @@ public class LegoBrick : MonoBehaviour
         // Reset nearest points for ghosting
         otherClosestPointToMe = preferredLegoBrick.GetComponent<Collider>().ClosestPoint(this.transform.position);
         myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
-        //Debug.DrawLine(otherClosestPointToMe, myClosestPointToOther, Color.red);
+        if (visualize) Debug.DrawLine(otherClosestPointToMe, myClosestPointToOther, Color.red);
 
         if (closestDistSqrd < maxGhostDistance * maxGhostDistance)
         {
@@ -215,21 +213,26 @@ public class LegoBrick : MonoBehaviour
         }
     }
 
-    public void PositionGhost(LegoBrick other)
+    public void PositionGhost()
     {
-        if (_ghosting == false)
+        if (!_ghosting || !_grasped || preferredLegoBrick.transform == null || preferredLegoBrick == this)
         {
             return;
         }
-        connectedToHover = other;
+        hoverTarget = preferredLegoBrick;
 
         // Position
 
         LocalPosition otherClosestPoint = LegoStaticUtils.FindClosestPosition(
-            other.transform.InverseTransformPoint(myClosestPointToOther),
-            other.points
+            hoverTarget.transform.InverseTransformPoint(myClosestPointToOther),
+            hoverTarget.points
         );
-        Vector3 otherWorldClosestPoint = other.transform.TransformPoint(otherClosestPoint.position);
+        if (otherClosestPoint == null)
+        {
+            DestroyGhost();
+            return;
+        }
+        Vector3 otherWorldClosestPoint = hoverTarget.transform.TransformPoint(otherClosestPoint.position);
 
         LocalPosition myClosestSlot = LegoStaticUtils.FindClosestPosition(
             transform.InverseTransformPoint(otherWorldClosestPoint),
@@ -237,7 +240,7 @@ public class LegoBrick : MonoBehaviour
         );
         Vector3 ghostWorldClosestSlot = ghost.transform.TransformPoint(myClosestSlot.position); //!
 
-        //Debug.DrawLine(transform.position, ghostWorldClosestSlot, Color.cyan);
+        if (visualize) Debug.DrawLine(transform.position, ghostWorldClosestSlot, Color.cyan);
         ghost.transform.position += otherWorldClosestPoint - ghostWorldClosestSlot;
 
         // Rotation
@@ -256,37 +259,46 @@ public class LegoBrick : MonoBehaviour
         //Debug.DrawRay(worldPoint, alignedForward, Color.cyan);
 
         // Find closest non-vertical local axis in other to alignForward
-        Vector3 otherClosestAxis = LegoStaticUtils.ClosestLegoLocalDirection(alignedForward, other.transform);
+        Vector3 otherClosestAxis = LegoStaticUtils.ClosestLegoLocalDirection(alignedForward, hoverTarget.transform);
         //Debug.DrawRay(other.transform.position, otherClosestAxis, Color.red);
         //Debug.DrawRay(other.transform.position, other.transform.up, Color.red);
 
         // Make that forward direction for LookRotation
-        Quaternion otherLocalRotation = Quaternion.LookRotation(otherClosestAxis, other.transform.up);
+        Quaternion otherLocalRotation = Quaternion.LookRotation(otherClosestAxis, hoverTarget.transform.up);
 
         ghost.transform.rotation = otherLocalRotation;
     }
 
-    public void ConnectTo(LegoBrick other)
+    public void ConnectTo()
     {
-        if (other == null)
+        if (hoverTarget == null)
         {
             return;
         }
-        DestroyGhost();
-        Disconnect();
-        connectedTo = other;
-        // Stop collisions with connectedTo
-        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
+        connectedTo = hoverTarget;
+        hoverTarget = null;
 
-        connectionJoint = gameObject.AddComponent<FixedJoint>();
+        // Stop collisions with connectedTo
+        Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
+
+        connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
         connectionJoint.enableCollision = false;
-        connectionJoint.breakForce = Mathf.Infinity;
-        connectionJoint.breakTorque = Mathf.Infinity;
+        //connectionJoint.breakForce = Mathf.Infinity;
+        //connectionJoint.breakTorque = Mathf.Infinity;
+        //connectionJoint.anchor = new Vector3(0, 0, 0);
+        connectionJoint.xMotion = ConfigurableJointMotion.Locked;
+        connectionJoint.yMotion = ConfigurableJointMotion.Locked;
+        connectionJoint.zMotion = ConfigurableJointMotion.Locked;
+        connectionJoint.angularXMotion = ConfigurableJointMotion.Locked;
+        connectionJoint.angularYMotion = ConfigurableJointMotion.Locked;
+        connectionJoint.angularZMotion = ConfigurableJointMotion.Locked;
+        //connectionJoint.targetPosition = new Vector3(0, 0, 0);
         connectionJoint.connectedBody = connectedTo.GetComponent<Rigidbody>();
 
         connectedTo.connectedToMe.Add(this);
-        LegoStaticUtils.SetOccupiedGridPositions(this, other);
-        // PositionPropegate();
+        LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
+        SetMass();
+        //MassPropagate();
         Debug.Log("Connection!");
     }
 
@@ -294,7 +306,7 @@ public class LegoBrick : MonoBehaviour
     {
         if (!IsConnected()) return;
         // Re-allow collisions with connectedTo
-        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
+        Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
 
         Destroy(connectionJoint);
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
@@ -320,13 +332,6 @@ public class LegoBrick : MonoBehaviour
 
         float shortDistance = ((slots[0].position - slots[1].position).magnitude) / 100f;
 
-        /*
-        Could instead do 'attempt connect' with the LERP - if collision Abort _connecting = false maybe flash red!!!
-        With LERP maybe need to propagate kinematic = true through heirarchy of ghosttarget/ other to prevent physics impulse
-        Then turn it back on with a successful connection, or after an aborted connection
-        Could do sanity check...
-        */
-
         // Initialize position and rotation.
         Vector3 finalPosition;
         Quaternion finalRotation;
@@ -349,10 +354,10 @@ public class LegoBrick : MonoBehaviour
 
         if (Vector3.Distance(finalPosition, targetPosition) < shortDistance && Quaternion.Angle(targetRotation, finalRotation) < 2F)
         {
-            Debug.Log("event");
-
+            //Debug.Log("event");
             _connecting = false;
-            ConnectTo(connectedToHover);
+            DestroyGhost();
+            ConnectTo();
             EndConnectLerp();
         }
 
@@ -369,35 +374,40 @@ public class LegoBrick : MonoBehaviour
             this.transform.position = finalPosition;
             this.transform.rotation = finalRotation;
         }
-
-        // Fade out ghost
-        //float alpha = ghostRenderer.material.GetFloat("Alpha");
-        //float finalAlpha = Mathf.Lerp(alpha, 0f, lerpSpeed * Time.deltaTime);
-        //ghostRenderer.material.SetFloat("Alpha", finalAlpha);
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        //if (_connecting)
+    /*
+    Could instead do 'attempt connect' with the LERP - if collision Abort _connecting = false maybe flash red!!!
+    With LERP maybe need to propagate kinematic = true through heirarchy of ghosttarget/ other to prevent physics impulse
+    Then turn it back on with a successful connection, or after an aborted connection
+    Could do sanity check...
+
+    Update: seems redundant
+    */
+    //private void OnCollisionEnter(Collision collision)
+    //{
+        //var hitbrick = collision.gameObject.GetComponent<LegoBrick>();
+        //if (hitbrick && _connecting)
         //{
+        //    Debug.Log("abort lerp!");
         //    _connecting = false;
+        //    EndConnectLerp();
         //}
-    }
+    //}
 
-    public void PositionPropagate()
+    public void SetMass()
     {
-        foreach (var brick in connectedToMe)
-        {
-            // brick.SetPositionGhost();
-            brick.PositionPropagate();
-        }
+        int depth = LegoStaticUtils.FindLegoDepth(this);
+        float mass = gameObject.GetComponent<Rigidbody>().mass;
+        gameObject.GetComponent<Rigidbody>().mass = mass < 0.01f ? 0.01f : mass -= 0.02f * depth;
+        Debug.Log("My mass: " + gameObject.GetComponent<Rigidbody>().mass);
     }
 
     public void DisconnectPropagate()
     {
         foreach (var brick in connectedToMe)
         {
-            Disconnect();
+            brick.Disconnect();
             brick.DisconnectPropagate();
         }
     }
@@ -438,12 +448,10 @@ public class LegoBrick : MonoBehaviour
 
     public void EndConnectLerp()
     {
-        //gameObject.GetComponent<BoxCollider>().enabled = true;
         gameObject.GetComponent<Rigidbody>().isKinematic = false;
     }
     public void StartConnectLerp()
     {
-        //gameObject.GetComponent<BoxCollider>().enabled = false;
         gameObject.GetComponent<Rigidbody>().isKinematic = true;
     }
 }
