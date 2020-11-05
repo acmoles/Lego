@@ -10,6 +10,7 @@ public class VisualizePosition : ScriptableObject
     public static void Create(GameObject target, Vector3 targetsLocalPosition, float size)
     {
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.GetComponent<Collider>().enabled = false;
         sphere.GetComponent<MeshRenderer>().material.color = new Color(0.71f, 0.80f, 0.49f);
         sphere.transform.localScale = new Vector3(size, size, size);
         sphere.transform.position = targetsLocalPosition;

@@ -5,6 +5,7 @@ using UnityEngine;
 using Leap;
 using Leap.Unity.Interaction;
 
+[SelectionBase]
 [RequireComponent(typeof(Shape))]
 public class LegoBrick : MonoBehaviour
 {
@@ -51,6 +52,15 @@ public class LegoBrick : MonoBehaviour
         meshBounds = _shape.meshRenderer.bounds;
         _shapeMesh = _shape.meshTransform;
 
+        /* TODO new init with LEGO models
+         * 
+         * - find children of connectivity and get localPostion for children in both lists, adding to points/slots appropriately
+         * - ? rename to follow Lego conventions?
+         * 
+         * Logic in test file
+         * 
+         */
+
         // Compensate for scale
         float compX = (importScaleFactor * meshBounds.extents.x / _shapeMesh.localScale.x) / halfSize;
         float compZ = (importScaleFactor * meshBounds.extents.z / _shapeMesh.localScale.z) / halfSize;
@@ -85,6 +95,10 @@ public class LegoBrick : MonoBehaviour
                 }
             }
         }
+
+        // TODO dynamically set bounding box based on base mesh
+        // OR use colliders from imported Lego model - see their collider combining logic
+        // How to use child colliders with rigid body?
     }
 
     private void OnDrawGizmos()
@@ -267,6 +281,9 @@ public class LegoBrick : MonoBehaviour
         Quaternion otherLocalRotation = Quaternion.LookRotation(otherClosestAxis, hoverTarget.transform.up);
 
         ghost.transform.rotation = otherLocalRotation;
+
+        // TODO Add check for valid ghost position. Change color using Lego method?
+        // Split lego brick setup and lego brick behavior? Even more so when using imported bricks (XR bootstrap).
     }
 
     public void ConnectTo()
@@ -280,6 +297,8 @@ public class LegoBrick : MonoBehaviour
 
         // Stop collisions with connectedTo
         Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
+
+        // TODO switch to parenting to common parent
 
         connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
         connectionJoint.enableCollision = false;
@@ -350,7 +369,7 @@ public class LegoBrick : MonoBehaviour
         Quaternion targetRotation = ghost.transform.rotation;
         finalPosition = Vector3.Lerp(finalPosition, targetPosition, lerpSpeed * Time.deltaTime);
         finalRotation = Quaternion.Slerp(finalRotation, targetRotation, lerpSpeed * 0.8f * Time.deltaTime);
-        Debug.DrawLine(targetPosition, finalPosition, Color.red);
+        if (visualize) Debug.DrawLine(targetPosition, finalPosition, Color.red);
 
         if (Vector3.Distance(finalPosition, targetPosition) < shortDistance && Quaternion.Angle(targetRotation, finalRotation) < 2F)
         {
@@ -373,6 +392,14 @@ public class LegoBrick : MonoBehaviour
         {
             this.transform.position = finalPosition;
             this.transform.rotation = finalRotation;
+        }
+
+        // Fade out ghost
+        if (ghostRenderer)
+        {
+            float alpha = ghostRenderer.sharedMaterial.GetFloat("_GlobalAlpha");
+            float finalAlpha = Mathf.Lerp(alpha, 0f, lerpSpeed * Time.deltaTime);
+            ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", finalAlpha);
         }
     }
 
@@ -400,7 +427,7 @@ public class LegoBrick : MonoBehaviour
         int depth = LegoStaticUtils.FindLegoDepth(this);
         float mass = gameObject.GetComponent<Rigidbody>().mass;
         gameObject.GetComponent<Rigidbody>().mass = mass < 0.01f ? 0.01f : mass -= 0.02f * depth;
-        Debug.Log("My mass: " + gameObject.GetComponent<Rigidbody>().mass);
+        //Debug.Log("My mass: " + gameObject.GetComponent<Rigidbody>().mass);
     }
 
     public void DisconnectPropagate()
@@ -425,7 +452,8 @@ public class LegoBrick : MonoBehaviour
             ghost = Instantiate(_shapeMesh);
             ghost.name = "Ghost";
             ghostRenderer = ghost.GetComponent<MeshRenderer>();
-            ghostRenderer.material = ghostMaterial;
+            ghostRenderer.sharedMaterial = ghostMaterial;
+            ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", 1.0f);
         }
     }
 
@@ -455,29 +483,3 @@ public class LegoBrick : MonoBehaviour
         gameObject.GetComponent<Rigidbody>().isKinematic = true;
     }
 }
-
-/*
- * TODO
- * 
- * - Get Lego pieces from startup kit
- *  * 
- * - Update preferred hand method to take into account target bounding box
- * 
- * - Fix fixed joint to make it actually solid
- * 
- *
- * 
- * 
- * Ghosting logic when grasping
- * - Which brick is preferred (ray to brick) - other color
- * - Which position on brick is preferred (ray from brick to position)
- * - Which position on grasped brick is preferred (ray from brick to grasped brick position)
- * - If first pref is top, second must be bottom (check in loop over positions)
- * 
- * 
-Because even though a single point is valid - other points could overlap
-Ideally a set of points on grasped would correspond to a set of valid points on target during ghosting
-No idea how to start this
-*/
-
-
