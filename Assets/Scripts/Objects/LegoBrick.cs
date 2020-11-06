@@ -4,6 +4,8 @@ using System;
 using UnityEngine;
 using Leap;
 using Leap.Unity.Interaction;
+using UnityEditor;
+using Leap.Unity;
 
 [SelectionBase]
 [RequireComponent(typeof(Shape))]
@@ -25,6 +27,7 @@ public class LegoBrick : MonoBehaviour
 
     protected Shape _shape;
     protected Transform _shapeMesh;
+    public GameObject thisPrefab;
     Bounds meshBounds;
     const float importScaleFactor = 100f;
 
@@ -292,6 +295,11 @@ public class LegoBrick : MonoBehaviour
         {
             return;
         }
+
+        // Check valid ghosting position for connection
+
+
+
         connectedTo = hoverTarget;
         hoverTarget = null;
 
@@ -324,6 +332,7 @@ public class LegoBrick : MonoBehaviour
     public void Disconnect()
     {
         if (!IsConnected()) return;
+        _shape.ResetColor();
         // Re-allow collisions with connectedTo
         Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
 
@@ -440,7 +449,7 @@ public class LegoBrick : MonoBehaviour
     }
 
     bool _ghosting = false;
-    Transform ghost;
+    GameObject ghost;
     MeshRenderer ghostRenderer;
     public Material ghostMaterial;
 
@@ -449,9 +458,20 @@ public class LegoBrick : MonoBehaviour
         if (!_ghosting)
         {
             _ghosting = true;
-            ghost = Instantiate(_shapeMesh);
+
+            //ghost = Instantiate(thisPrefab);
+            //ghost.name = "Ghost";
+
+            //MonoBehaviour[] comps = GetComponents<MonoBehaviour>();
+            //foreach (MonoBehaviour c in comps)
+            //{
+            //    c.enabled = false;
+            //}
+            ghost = Instantiate(_shapeMesh.gameObject);
             ghost.name = "Ghost";
+
             ghostRenderer = ghost.GetComponent<MeshRenderer>();
+            //ghostRenderer.enabled = true;
             ghostRenderer.sharedMaterial = ghostMaterial;
             ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", 1.0f);
         }

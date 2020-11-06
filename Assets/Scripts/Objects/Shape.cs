@@ -38,8 +38,6 @@ public class Shape : Persistable
         MaterialId = materialId;
     }
 
-    // TODO remove own color logic
-
     public Color color { get; set; }
     Color _color;
     static int colorPropertyId = Shader.PropertyToID("_Color");

@@ -17,6 +17,10 @@
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
 
+# Ignore files
+~*/
+~*.meta
+
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
 
@@ -69,3 +73,11 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Lego temporary packages
+/[Aa]ssets/[Vv]endor/com.unity.lego.materials@2.0.0
+/[Aa]ssets/[Vv]endor/com.unity.lego.modelimporter@3.0.2
+/[Aa]ssets/[Vv]endor/com.unity.lego.materials@2.0.0.meta
+/[Aa]ssets/[Vv]endor/com.unity.lego.modelimporter@3.0.2.meta
+/[Aa]ssets/LEGO Data
+/[Aa]ssets/LEGO Data.meta

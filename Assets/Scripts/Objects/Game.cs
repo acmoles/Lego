@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -207,14 +208,15 @@ public class Game : Persistable
         lb.Init();
         Transform t = instance.transform;
         t.localPosition = SpawnZoneLevel.SpawnPoint;
-        t.localRotation = Random.rotation;
+        t.localRotation = UnityEngine.Random.rotation;
+
+        Array values = Enum.GetValues(typeof(LegoColors.Id));
+        int randomIndex = UnityEngine.Random.Range(0, values.Length);
+        var randomId = (LegoColors.Id)values.GetValue(randomIndex);
+        Color color = LegoColors.GetColour(randomId);
+
         //t.localScale = Vector3.one * Random.Range(0.5f, 2f);
-        instance.SetColor(Random.ColorHSV(
-            hueMin: 0f, hueMax: 1f,
-            saturationMin: 0.5f, saturationMax: 1f,
-            valueMin: 0.25f, valueMax: 1f,
-            alphaMin: 1f, alphaMax: 1f
-        ));
+        instance.SetColor(color);
         shapes.Add(instance);
     }
 
@@ -235,7 +237,7 @@ public class Game : Persistable
     {
         if (shapes.Count > 0)
         {
-            int index = Random.Range(0, shapes.Count);
+            int index = UnityEngine.Random.Range(0, shapes.Count);
             Destroy(shapes[index].gameObject);
             int lastIndex = shapes.Count - 1;
             shapes[index] = shapes[lastIndex];
