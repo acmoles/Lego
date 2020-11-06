@@ -11,9 +11,6 @@ public class ShapeFactory : ScriptableObject
     Shape[] prefabs;
 
     [SerializeField]
-    Shape platePrefab;
-
-    [SerializeField]
     Material[] materials;
 
     [SerializeField]
@@ -64,13 +61,13 @@ public class ShapeFactory : ScriptableObject
         // -1 to remove plate
     }
 
-    public Shape GetPlate()
-    {
-        Shape instance = Instantiate(platePrefab);
-        int materialId = Random.Range(0, materials.Length);
-        instance.SetMaterial(materials[materialId], materialId);
-        return instance;
-    }
+    //public Shape GetPlate()
+    //{
+    //    Shape instance = Instantiate(platePrefab);
+    //    int materialId = Random.Range(0, materials.Length);
+    //    instance.SetMaterial(materials[materialId], materialId);
+    //    return instance;
+    //}
 
     void CreatePools()
     {

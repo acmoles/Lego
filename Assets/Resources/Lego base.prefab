@@ -187,9 +187,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16e6ce178d1d44467a851717a3bdd165, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mesh: {fileID: 0}
-  meshRenderer: {fileID: 0}
-  meshTransform: {fileID: 0}
+  CombinedMesh: {fileID: 0}
 --- !u!114 &8478029926580532247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -203,6 +201,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   basePlate: 0
+  report: 0
 --- !u!114 &1326030457949337259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -215,9 +214,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ddf45e404e4e4e52a2821599e3fcd39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thisPrefab: {fileID: 5094046427399811862}
-  visualize: 0
+  setup: {fileID: 0}
+  visualize: 1
   kinematic: 0
+  shortDistance: 0.001
   interactionBehaviour: {fileID: 4254323189066041613}
   maxGhostDistance: 0.1
   connectedTo: {fileID: 0}

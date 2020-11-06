@@ -26,8 +26,8 @@ public class SizeLegoCollider : MonoBehaviour
             }
 
             BoxCollider collider = rootGameObject.GetComponent<BoxCollider>();
-            collider.center = bounds.center - rootGameObject.transform.position;
-            collider.size = bounds.size;
+            collider.center = rootGameObject.transform.GetChild(0).TransformPoint(bounds.center) - rootGameObject.transform.position;
+            collider.size = rootGameObject.transform.GetChild(0).TransformPoint(bounds.size);
         }
     }
 

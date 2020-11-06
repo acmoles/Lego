@@ -27,92 +27,37 @@ public class LegoBrick : MonoBehaviour
     static LegoBrick preferredLegoBrick;
 
     protected Shape _shape;
-    protected Transform _shapeMesh;
-    public GameObject thisPrefab;
-    Bounds meshBounds;
-    const float importScaleFactor = 100f;
+    [HideInInspector]
+    public LegoBrickSetup setup;
 
     public bool visualize = true;
     public bool kinematic = false;
 
-    public List<LocalPosition> slots = new List<LocalPosition>();
-    public List<LocalPosition> points = new List<LocalPosition>();
-
-    const float halfSize = 1.139775f; // Distance between points
-    const float height = 0.45f;
     const float mass = 0.1f;
+
+    public float shortDistance = 0.001f;
 
     void Awake()
     {
         if (kinematic) GetComponent<Rigidbody>().isKinematic = true;
+        if (interactionBehaviour) interactionBehaviour.manager = Game.Instance.manager;
         allLegoBricks.Add(this);
-        interactionBehaviour.manager = Game.Instance.manager;
+        Init();
     }
 
     public void Init()
     {
         gameObject.GetComponent<Rigidbody>().mass = mass;
+        // TODO currently used to color brick visual
         _shape = GetComponent<Shape>();
-        meshBounds = _shape.meshRenderer.bounds;
-        _shapeMesh = _shape.meshTransform;
-
-        /* TODO new init with LEGO models
-         * 
-         * - find children of connectivity and get localPostion for children in both lists, adding to points/slots appropriately
-         * - ? rename to follow Lego conventions?
-         * 
-         * Logic in test file
-         * 
-         */
-
-        // Compensate for scale
-        float compX = (importScaleFactor * meshBounds.extents.x / _shapeMesh.localScale.x) / halfSize;
-        float compZ = (importScaleFactor * meshBounds.extents.z / _shapeMesh.localScale.z) / halfSize;
-
-        int xCount = (int)Math.Round(compX);
-        int zCount = (int)Math.Round(compZ);
-        //Debug.Log("init lego brick: " + xCount + ", " + zCount);
-
-        float scaledHalfSize = (halfSize * _shapeMesh.localScale.x) / importScaleFactor;
-        float scaledHeight = (height * _shapeMesh.localScale.y) / importScaleFactor;
-        
-        if (visualize) VisualizePosition.Create(gameObject, new Vector3(meshBounds.min.x + scaledHalfSize, meshBounds.max.y - scaledHeight, meshBounds.min.z + scaledHalfSize), 0.02f);
-
-        for (int x = 0; x < xCount; x++)
-        {
-            for (int z = 0; z < zCount; z++)
-            {
-                var slot = new LocalPosition();
-                slot.position = meshBounds.min + new Vector3(scaledHalfSize + x * scaledHalfSize * 2, 0, scaledHalfSize + z * scaledHalfSize * 2);
-                slots.Add(slot);
-
-                var point = new LocalPosition();
-                point.position = slot.position;
-                point.position.y = meshBounds.max.y;
-                point.position.y -= scaledHeight; // Height of a lego brick
-                points.Add(point);
-
-                if (visualize)
-                {
-                    VisualizePosition.Create(gameObject, point.position, 0.01f);
-                    VisualizePosition.Create(gameObject, slot.position, 0.005f);
-                }
-            }
-        }
-
-        // TODO dynamically set bounding box based on base mesh
-        // OR use colliders from imported Lego model - see their collider combining logic
-        // How to use child colliders with rigid body?
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawWireCube(meshBounds.center, meshBounds.size);
-        Gizmos.DrawWireSphere(meshBounds.center, 0.01f);
+        _shape.init();
+        setup = GetComponent<LegoBrickSetup>();
     }
 
     public void onHoverBegin()
     {
+        // TODO on hover highlighting
+
         //Debug.Log("Same instance? " + (lastLegoBrick == this));
         //if (lastLegoBrick != this)
         //{
@@ -126,13 +71,13 @@ public class LegoBrick : MonoBehaviour
         //_shape.ResetColor();
     }
 
-
     public InteractionBehaviour interactionBehaviour;
 
     bool _grasped = false;
     public float maxGhostDistance = 0.1f;
     LegoBrick hoverTarget;
 
+    [HideInInspector]
     public LegoBrick connectedTo;
     ConfigurableJoint connectionJoint;
     List<LegoBrick> connectedToMe = new List<LegoBrick>();
@@ -158,6 +103,7 @@ public class LegoBrick : MonoBehaviour
             myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
 
             float testDistanceSqrd = (otherClosestPointToMe - myClosestPointToOther).sqrMagnitude;
+
             if (testDistanceSqrd < closestDistSqrd && brick != this && brick != connectedTo && !connectedToMe.Contains(brick))
             {
                 preferredLegoBrick = brick;
@@ -204,7 +150,7 @@ public class LegoBrick : MonoBehaviour
 
     public void onGraspBegin()
     {
-        _shape.SetColor(Color.magenta);
+        // TODO on grasp highlighting
         _grasped = true;
         Disconnect();
         if (connectedToMe.Count > 0)
@@ -221,7 +167,6 @@ public class LegoBrick : MonoBehaviour
     public void onGraspEnd()
     {
         _grasped = false;
-        _shape.ResetColor();
 
         // Start connection at Ghost
         if (_ghosting)
@@ -241,20 +186,20 @@ public class LegoBrick : MonoBehaviour
 
         // Position
 
-        LocalPosition otherClosestPoint = LegoStaticUtils.FindClosestPosition(
+        LocalPosition otherClosestKnob = LegoStaticUtils.FindClosestPosition(
             hoverTarget.transform.InverseTransformPoint(myClosestPointToOther),
-            hoverTarget.points
+            hoverTarget.setup.knobs
         );
-        if (otherClosestPoint == null)
+        if (otherClosestKnob == null)
         {
             DestroyGhost();
             return;
         }
-        Vector3 otherWorldClosestPoint = hoverTarget.transform.TransformPoint(otherClosestPoint.position);
+        Vector3 otherWorldClosestPoint = hoverTarget.transform.TransformPoint(otherClosestKnob.position);
 
         LocalPosition myClosestSlot = LegoStaticUtils.FindClosestPosition(
             transform.InverseTransformPoint(otherWorldClosestPoint),
-            slots
+            setup.slots
         );
         Vector3 ghostWorldClosestSlot = ghost.transform.TransformPoint(myClosestSlot.position); //!
 
@@ -297,9 +242,7 @@ public class LegoBrick : MonoBehaviour
             return;
         }
 
-        // Check valid ghosting position for connection
-
-
+        // TODO Check valid ghosting position for connection
 
         connectedTo = hoverTarget;
         hoverTarget = null;
@@ -333,7 +276,7 @@ public class LegoBrick : MonoBehaviour
     public void Disconnect()
     {
         if (!IsConnected()) return;
-        _shape.ResetColor();
+
         // Re-allow collisions with connectedTo
         Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
 
@@ -358,8 +301,6 @@ public class LegoBrick : MonoBehaviour
         {
             return;
         }
-
-        float shortDistance = ((slots[0].position - slots[1].position).magnitude) / 100f;
 
         // Initialize position and rotation.
         Vector3 finalPosition;
@@ -405,12 +346,12 @@ public class LegoBrick : MonoBehaviour
         }
 
         // Fade out ghost
-        if (ghostRenderer)
-        {
-            float alpha = ghostRenderer.sharedMaterial.GetFloat("_GlobalAlpha");
-            float finalAlpha = Mathf.Lerp(alpha, 0f, lerpSpeed * Time.deltaTime);
-            ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", finalAlpha);
-        }
+        //if (ghostRenderer)
+        //{
+        //    float alpha = ghostRenderer.sharedMaterial.GetFloat("_GlobalAlpha");
+        //    float finalAlpha = Mathf.Lerp(alpha, 0f, lerpSpeed * Time.deltaTime);
+        //    ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", finalAlpha);
+        //}
     }
 
     /*
@@ -460,21 +401,15 @@ public class LegoBrick : MonoBehaviour
         {
             _ghosting = true;
 
-            //ghost = Instantiate(thisPrefab);
-            //ghost.name = "Ghost";
-
-            //MonoBehaviour[] comps = GetComponents<MonoBehaviour>();
-            //foreach (MonoBehaviour c in comps)
-            //{
-            //    c.enabled = false;
-            //}
-            ghost = Instantiate(_shapeMesh.gameObject);
+            ghost = new GameObject();
             ghost.name = "Ghost";
-
-            ghostRenderer = ghost.GetComponent<MeshRenderer>();
-            //ghostRenderer.enabled = true;
+            MeshFilter filter = ghost.AddComponent<MeshFilter>();
+            filter.mesh = _shape.CombinedMesh;
+            
+            ghostRenderer = ghost.AddComponent<MeshRenderer>();
             ghostRenderer.sharedMaterial = ghostMaterial;
             ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", 1.0f);
+            //Debug.Log("Make Ghost");
         }
     }
 
@@ -483,8 +418,9 @@ public class LegoBrick : MonoBehaviour
         if (_ghosting && ghost != null)
         {
             _ghosting = false;
-            Destroy(ghost.gameObject);
+            Destroy(ghost);
             ghost = null;
+            Destroy(ghostRenderer);
             ghostRenderer = null;
             //Debug.Log("Destroy Ghost");
         }

@@ -6,9 +6,64 @@ public class Shape : Persistable
 {
     int shapeId = int.MinValue;
 
-    public GameObject mesh;
-    public MeshRenderer meshRenderer;
-    public Transform meshTransform;
+    List<MeshRenderer> renderersToEdit = new List<MeshRenderer>();
+
+    [HideInInspector]
+    public Mesh CombinedMesh;
+
+    public void init()
+    {
+        Transform parentPart = transform.GetChild(0);
+        Transform shell = parentPart.Find("Shell");
+        if (shell)
+        {
+            var mr = shell.GetComponent<MeshRenderer>();
+            renderersToEdit.Add(mr);
+        }
+        else
+        {
+            Debug.Log("Missing shell!");
+        }
+
+        Transform knobs = parentPart.Find("Knobs");
+        if (knobs != null)
+        {
+            foreach (Transform knob in knobs)
+            {
+                var mr = knob.GetComponent<MeshRenderer>();
+                renderersToEdit.Add(mr);
+            }
+        }
+
+        Transform slots = parentPart.Find("Tubes");
+        if (slots != null)
+        {
+            foreach (Transform slot in slots)
+            {
+                var mr = slot.GetComponent<MeshRenderer>();
+                renderersToEdit.Add(mr);
+            }
+        }
+
+        GenerateCombinedMesh();
+    }
+
+    void GenerateCombinedMesh()
+    {
+        MeshFilter[] meshFilters = GetComponentsInChildren<MeshFilter>();
+        CombineInstance[] combine = new CombineInstance[meshFilters.Length];
+
+        int i = 0;
+        while (i < meshFilters.Length)
+        {
+            combine[i].mesh = meshFilters[i].sharedMesh;
+            combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
+
+            i++;
+        }
+        CombinedMesh = new Mesh();
+        CombinedMesh.CombineMeshes(combine);
+    }
 
     public int ShapeId
     {
@@ -34,33 +89,28 @@ public class Shape : Persistable
 
     public void SetMaterial(Material material, int materialId)
     {
-        meshRenderer.material = material;
+        foreach (var renderer in renderersToEdit)
+        {
+            renderer.material = material;
+        }
         MaterialId = materialId;
     }
 
     public Color color { get; set; }
-    Color _color;
     static int colorPropertyId = Shader.PropertyToID("_Color");
     static MaterialPropertyBlock sharedPropertyBlock;
 
     public void SetColor(Color color)
     {
-        _color = this.color;
         this.color = color;
         if (sharedPropertyBlock == null)
         {
             sharedPropertyBlock = new MaterialPropertyBlock();
         }
         sharedPropertyBlock.SetColor(colorPropertyId, color);
-        meshRenderer.SetPropertyBlock(sharedPropertyBlock);
-    }
-
-    public void ResetColor()
-    {
-        if (_color != null)
+        foreach (var renderer in renderersToEdit)
         {
-            SetColor(_color);
-            //Debug.Log("Reset color");
+            renderer.SetPropertyBlock(sharedPropertyBlock);
         }
     }
 

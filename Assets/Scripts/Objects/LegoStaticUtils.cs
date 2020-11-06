@@ -91,32 +91,32 @@ public static class LegoStaticUtils
  */
     public static void SetOccupiedGridPositions(LegoBrick me, LegoBrick other)
     {
-        float shortDistance = ((me.slots[0].position - me.slots[1].position).magnitude) / 10f;
-
-        Vector3[] otherPoints = new Vector3[other.points.Count];
+        Vector3[] otherKnobs = new Vector3[other.setup.knobs.Count];
         Vector3 pos;
-        for (int i = 0; i < other.points.Count; i++)
+        for (int i = 0; i < other.setup.knobs.Count; i++)
         {
-            pos = other.points[i].position;
+            pos = other.setup.knobs[i].position;
             pos = other.transform.TransformPoint(pos);
-            otherPoints[i] = pos;
+            otherKnobs[i] = pos;
         }
-        Vector3[] mySlots = new Vector3[me.slots.Count];
-        for (int i = 0; i < me.slots.Count; i++)
+        Vector3[] mySlots = new Vector3[me.setup.slots.Count];
+        for (int i = 0; i < me.setup.slots.Count; i++)
         {
-            pos = me.slots[i].position;
+            pos = me.setup.slots[i].position;
             pos = me.transform.TransformPoint(pos);
             mySlots[i] = pos;
         }
 
-        for (int i = 0; i < otherPoints.Length; i++)
+        for (int i = 0; i < otherKnobs.Length; i++)
         {
             for (int j = 0; j < mySlots.Length; j++)
             {
-                float testDistance = (otherPoints[i] - mySlots[j]).magnitude;
-                if (testDistance < shortDistance)
+                float testDistance = (otherKnobs[i] - mySlots[j]).magnitude;
+                
+                if (testDistance < me.shortDistance)
                 {
-                    other.points[i].available = !other.points[i].available;
+                    //Debug.Log("Distance: " + testDistance);
+                    other.setup.knobs[i].available = !other.setup.knobs[i].available;
                     //VisualizePosition.Create(null, otherPoints[i], 0.01f);
                 }
             }

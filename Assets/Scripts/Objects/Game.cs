@@ -18,7 +18,7 @@ public class Game : Persistable
     [SerializeField] PersistentStorage storage;
     const int saveVersion = 2;
 
-    [SerializeField] int levelCount;
+    [SerializeField] int levelCount = 0;
     int loadedLevelBuildIndex = 0;
 
     public TextMeshProUGUI levelText;
@@ -71,7 +71,6 @@ public class Game : Persistable
                     {
                         CreateShape();
                     }
-                    CreatePlate();
 
                 } else if (loadedScene.name.Contains("ObjectLevel ") && notInLevel)
                 {
@@ -220,18 +219,18 @@ public class Game : Persistable
         shapes.Add(instance);
     }
 
-    void CreatePlate() {
-        Debug.Log("Create plate");
-        Shape instance = shapeFactory.GetPlate();
-        LegoBrick lb = instance.GetComponent<LegoBrick>();
-        lb.Init();
-        Transform t = instance.transform;
-        Vector3 position = new Vector3(0f, 1.455f, 0.2f);
-        t.localPosition = position;
-        instance.SetColor(Color.white);
+    //void CreatePlate() {
+    //    Debug.Log("Create plate");
+    //    Shape instance = shapeFactory.GetPlate();
+    //    LegoBrick lb = instance.GetComponent<LegoBrick>();
+    //    lb.Init();
+    //    Transform t = instance.transform;
+    //    Vector3 position = new Vector3(0.12f, 1.455f, 0.4f);
+    //    t.localPosition = position;
+    //    instance.SetColor(Color.white);
 
-        shapes.Add(instance);
-    }
+    //    shapes.Add(instance);
+    //}
 
     void DestroyShape()
     {

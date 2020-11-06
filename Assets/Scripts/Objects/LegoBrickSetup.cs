@@ -6,6 +6,7 @@ using UnityEngine;
 public class LegoBrickSetup : MonoBehaviour
 {
     public bool basePlate = false;
+    public bool report = false;
     private bool setupComplete = false;
 
     public List<LocalPosition> knobs;
@@ -13,13 +14,11 @@ public class LegoBrickSetup : MonoBehaviour
 
     private void OnEnable()
     {
-        setupComplete = false;
         Awake();
     }
 
     void Awake()
     {
-        Debug.Log("Init " + gameObject.name);
         knobs = new List<LocalPosition>();
         slots = new List<LocalPosition>();
         PopulateConnections();
@@ -41,8 +40,9 @@ public class LegoBrickSetup : MonoBehaviour
                     {
                         LocalPosition knob = new LocalPosition();
                         knob.position = child.localPosition + knobsList.localPosition;
-                        //knob.position = Quaternion.Inverse(knobsList.rotation) * knob.position;
-                        Debug.LogFormat("Knob at: {0}", knob.position);
+                        // Prebake realistic scale
+                        knob.position = transform.GetChild(0).TransformVector(knob.position);
+                        if (report) Debug.LogFormat("Knob at: {0}", knob.position);
                         knobs.Add(knob);
                     }
                 } else
@@ -52,8 +52,9 @@ public class LegoBrickSetup : MonoBehaviour
                     {
                         LocalPosition slot = new LocalPosition();
                         slot.position = child.localPosition + slotsList.localPosition;
-                        //slot.position = Quaternion.Inverse(slotsList.rotation) * slot.position;
-                        Debug.LogFormat("Slot at: {0}", slot.position);
+                        // Preback realistic scale
+                        slot.position = transform.GetChild(0).TransformVector(slot.position);
+                        if (report) Debug.LogFormat("Slot at: {0}", slot.position);
                         slots.Add(slot);
                     }
                 }
@@ -65,30 +66,35 @@ public class LegoBrickSetup : MonoBehaviour
             Debug.Log(connectivity);
         }
 
-        Debug.Log("Slot count: " + slots.Count);
-        Debug.Log("Knobs count: " + knobs.Count);
+        if (report)
+        {
+            Debug.Log("Slot count: " + slots.Count);
+            Debug.Log("Knobs count: " + knobs.Count);
+        }
         setupComplete = true;
     }
 
-    private void OnDrawGizmos()
-    {
-        //Collider col = GetComponent<Collider>();
-        //Gizmos.DrawWireCube(col.bounds.center, col.bounds.extents);
-        if (setupComplete)
-        {
-            Gizmos.color = Color.green;
-            foreach (var item in slots)
-            {
-                Gizmos.DrawLine(Vector3.zero, transform.TransformPoint(item.position));
-            }
-            Gizmos.color = Color.red;
-            foreach (var item in knobs)
-            {
-                Gizmos.DrawLine(Vector3.zero, transform.TransformPoint(item.position));
-            }
-        }
+    //private void OnDrawGizmos()
+    //{
+    //    //Collider col = GetComponent<Collider>();
+    //    //Gizmos.DrawWireCube(col.bounds.center, col.bounds.extents);
+    //    if (setupComplete && slots.Count > 0 && knobs.Count > 0)
+    //    {
+    //        Gizmos.color = Color.green;
+    //        foreach (var item in slots)
+    //        {
+    //            var point = transform.TransformPoint(item.position);
+    //            Gizmos.DrawLine(Vector3.zero, point);
+    //        }
+    //        Gizmos.color = Color.red;
+    //        foreach (var item in knobs)
+    //        {
+    //            var point = transform.TransformPoint(item.position);
+    //            Gizmos.DrawLine(Vector3.zero, point);
+    //        }
+    //    }
 
-    }
+    //}
 
 
 }
