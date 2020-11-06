@@ -9,6 +9,7 @@ using Leap.Unity;
 
 [SelectionBase]
 [RequireComponent(typeof(Shape))]
+[RequireComponent(typeof(LegoBrickSetup))]
 public class LegoBrick : MonoBehaviour
 {
     private static HashSet<LegoBrick> _allLegoBricks;
