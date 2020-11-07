@@ -113,7 +113,7 @@ public static class LegoStaticUtils
             {
                 float testDistance = (otherKnobs[i] - mySlots[j]).magnitude;
                 
-                if (testDistance < me.shortDistance)
+                if (testDistance < me.smallDistance)
                 {
                     //Debug.Log("Distance: " + testDistance);
                     other.setup.knobs[i].available = !other.setup.knobs[i].available;

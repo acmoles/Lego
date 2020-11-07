@@ -35,12 +35,17 @@ public class LegoBrick : MonoBehaviour
 
     const float mass = 0.1f;
 
-    public float shortDistance = 0.001f;
+    [Range(0, 0.01F)]
+    public float smallDistance = 0.001f;
+
+    [Range(0, 4F)]
+    public float smallAngle = 1f;
 
     void Awake()
     {
         if (kinematic) GetComponent<Rigidbody>().isKinematic = true;
         if (interactionBehaviour) interactionBehaviour.manager = Game.Instance.manager;
+        else Debug.Log("Missing interaction behaviour");
         allLegoBricks.Add(this);
         Init();
     }
@@ -322,7 +327,7 @@ public class LegoBrick : MonoBehaviour
         finalRotation = Quaternion.Slerp(finalRotation, targetRotation, lerpSpeed * 0.8f * Time.deltaTime);
         if (visualize) Debug.DrawLine(targetPosition, finalPosition, Color.red);
 
-        if (Vector3.Distance(finalPosition, targetPosition) < shortDistance && Quaternion.Angle(targetRotation, finalRotation) < 2F)
+        if (Vector3.Distance(finalPosition, targetPosition) < smallDistance && Quaternion.Angle(targetRotation, finalRotation) < smallAngle)
         {
             //Debug.Log("event");
             _connecting = false;
