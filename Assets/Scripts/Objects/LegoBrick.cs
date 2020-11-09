@@ -95,13 +95,16 @@ public class LegoBrick : MonoBehaviour
         UpdateConnectionTo();
     }
 
+    public bool rayDown = true;
     Vector3 otherClosestPointToMe;
     Vector3 myClosestPointToOther;
     public LegoBrick FindPreferredLegoBrick()
     {
-        // Nearby brick all
         LegoBrick preferredLegoBrick = null;
         float closestDistSqrd = float.PositiveInfinity;
+        float closestVerticalSqrd = float.PositiveInfinity;
+
+        // Nearby brick all
         foreach (var brick in allLegoBricks)
         {
             otherClosestPointToMe = brick.GetComponent<Collider>().ClosestPoint(this.transform.position);
@@ -109,30 +112,14 @@ public class LegoBrick : MonoBehaviour
 
             float testDistanceSqrd = (otherClosestPointToMe - myClosestPointToOther).sqrMagnitude;
 
-            if (testDistanceSqrd < closestDistSqrd && brick != this && brick != connectedTo && !connectedToMe.Contains(brick))
+            Vector3 delta = otherClosestPointToMe - myClosestPointToOther;
+            float testClosestVerticalSqrd = delta.y * delta.y;
+
+            if (testDistanceSqrd < closestDistSqrd && testClosestVerticalSqrd < closestVerticalSqrd && brick != this && brick != connectedTo && !connectedToMe.Contains(brick))
             {
                 preferredLegoBrick = brick;
                 closestDistSqrd = testDistanceSqrd;
-            }
-        }
-
-        // Nearby brick below
-        var ray = new Ray(transform.position, -transform.up);
-        if (visualize) Debug.DrawRay(transform.position, -transform.up, Color.white);
-        RaycastHit raycastHit;
-        if (Physics.Raycast(ray, out raycastHit))
-        {
-            var hitBrick = raycastHit.collider.gameObject.GetComponent<LegoBrick>();
-            if (hitBrick != this && hitBrick != connectedTo && !connectedToMe.Contains(hitBrick))
-            {
-                float belowDistSqrd = (hitBrick.transform.position - transform.position).sqrMagnitude;
-
-                // Choose which to use, preferring below bricks
-                if (belowDistSqrd < 100*closestDistSqrd)
-                {
-                    preferredLegoBrick = hitBrick;
-                    closestDistSqrd = belowDistSqrd;
-                }
+                closestVerticalSqrd = testClosestVerticalSqrd;
             }
         }
 
@@ -140,6 +127,7 @@ public class LegoBrick : MonoBehaviour
         otherClosestPointToMe = preferredLegoBrick.GetComponent<Collider>().ClosestPoint(this.transform.position);
         myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
         if (visualize) Debug.DrawLine(otherClosestPointToMe, myClosestPointToOther, Color.red);
+        
 
         if (closestDistSqrd < maxGhostDistance * maxGhostDistance)
         {
@@ -240,6 +228,7 @@ public class LegoBrick : MonoBehaviour
         // Split lego brick setup and lego brick behavior? Even more so when using imported bricks (XR bootstrap).
     }
 
+    public LayerMask layerMask;
     public void ConnectTo()
     {
         if (hoverTarget == null)
@@ -247,15 +236,21 @@ public class LegoBrick : MonoBehaviour
             return;
         }
 
+        Collider[] hitColliders = Physics.OverlapBox(gameObject.transform.position, gameObject.GetComponent<Collider>().bounds.extents, gameObject.transform.rotation, layerMask);
         // TODO Check valid ghosting position for connection
+        if (hitColliders.Length > 0)
+        {
+            Debug.Log("Abort connect");
+            return;
+        }
 
         connectedTo = hoverTarget;
         hoverTarget = null;
 
         // Stop collisions with connectedTo
-        Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
+        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
 
-        // TODO switch to parenting to common parent
+        // TODO switch to parenting to common parent?
 
         connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
         connectionJoint.enableCollision = false;
@@ -283,7 +278,7 @@ public class LegoBrick : MonoBehaviour
         if (!IsConnected()) return;
 
         // Re-allow collisions with connectedTo
-        Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
+        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
 
         Destroy(connectionJoint);
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);

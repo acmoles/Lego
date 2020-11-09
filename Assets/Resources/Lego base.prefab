@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 2924318975705923787}
   - component: {fileID: 8478029926580532247}
   - component: {fileID: 1326030457949337259}
-  m_Layer: 11
+  m_Layer: 13
   m_Name: Lego base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -212,9 +212,14 @@ MonoBehaviour:
   setup: {fileID: 0}
   visualize: 1
   kinematic: 0
-  shortDistance: 0.001
+  smallDistance: 0.001
+  smallAngle: 1
   interactionBehaviour: {fileID: 4254323189066041613}
   maxGhostDistance: 0.1
   connectedTo: {fileID: 0}
+  rayDown: 0
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 0
   lerpSpeed: 20
   ghostMaterial: {fileID: 2100000, guid: e2670030b15168d4291e41b00cc8a21e, type: 2}

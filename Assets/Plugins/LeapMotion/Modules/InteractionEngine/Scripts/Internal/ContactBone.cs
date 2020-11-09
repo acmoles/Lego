@@ -168,8 +168,10 @@ namespace Leap.Unity.Interaction {
                      + "Behaviour! This is liable to cause contact bones to build unstable "
                      + "velocities and produce bad behavior. Please check your layer "
                      + "settings in the Interaction Manager, and avoid placing any non-"
-                     + "Interaction objects in layers that contain Interaction objects.",
-                     this);
+                     + "Interaction objects in layers that contain Interaction objects. "
+                     + collision.gameObject.name,
+                     this
+                     );
       }
       #endif
     }
