@@ -44,8 +44,10 @@ public class LegoBrick : MonoBehaviour
     void Awake()
     {
         if (kinematic) GetComponent<Rigidbody>().isKinematic = true;
+        GetComponent<Rigidbody>().maxAngularVelocity = 10f;
         if (interactionBehaviour) interactionBehaviour.manager = Game.Instance.manager;
-        else Debug.Log("Missing interaction behaviour");
+        else Debug.Log("Missing interaction behaviour: " + gameObject.name);
+        // TODO active brick after first grab - except if plate or checked bool
         allLegoBricks.Add(this);
         Init();
     }
@@ -57,6 +59,7 @@ public class LegoBrick : MonoBehaviour
         _shape = GetComponent<Shape>();
         _shape.init();
         setup = GetComponent<LegoBrickSetup>();
+        StartCoroutine("UpdateOccupiedGridPositions");
     }
 
     public void onHoverBegin()
@@ -78,7 +81,6 @@ public class LegoBrick : MonoBehaviour
 
     public InteractionBehaviour interactionBehaviour;
 
-    bool _grasped = false;
     public float maxGhostDistance = 0.1f;
     LegoBrick hoverTarget;
 
@@ -95,8 +97,13 @@ public class LegoBrick : MonoBehaviour
         UpdateConnectionTo();
     }
 
-    public bool rayDown = true;
-    Vector3 otherClosestPointToMe;
+    float maxSpeed = 200f;
+    void FixedUpdate()
+    {
+        if (interactionBehaviour != null) interactionBehaviour.rigidbody.velocity = Vector3.ClampMagnitude(interactionBehaviour.rigidbody.velocity, maxSpeed);
+    }
+
+        Vector3 otherClosestPointToMe;
     Vector3 myClosestPointToOther;
     public LegoBrick FindPreferredLegoBrick()
     {
@@ -115,22 +122,24 @@ public class LegoBrick : MonoBehaviour
             Vector3 delta = otherClosestPointToMe - myClosestPointToOther;
             float testClosestVerticalSqrd = delta.y * delta.y;
 
-            if (testDistanceSqrd < closestDistSqrd && testClosestVerticalSqrd < closestVerticalSqrd && brick != this && brick != connectedTo && !connectedToMe.Contains(brick))
+            if (testDistanceSqrd < closestDistSqrd
+                && testClosestVerticalSqrd < closestVerticalSqrd
+                && brick != this && brick != connectedTo
+                && !connectedToMe.Contains(brick))
             {
                 preferredLegoBrick = brick;
                 closestDistSqrd = testDistanceSqrd;
                 closestVerticalSqrd = testClosestVerticalSqrd;
             }
-        }
-
-        // Reset nearest points for ghosting
-        otherClosestPointToMe = preferredLegoBrick.GetComponent<Collider>().ClosestPoint(this.transform.position);
-        myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
-        if (visualize) Debug.DrawLine(otherClosestPointToMe, myClosestPointToOther, Color.red);
-        
+        }        
 
         if (closestDistSqrd < maxGhostDistance * maxGhostDistance)
         {
+            // Reset nearest points for ghosting
+            otherClosestPointToMe = preferredLegoBrick.GetComponent<Collider>().ClosestPoint(this.transform.position);
+            myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
+            if (visualize) Debug.DrawLine(otherClosestPointToMe, myClosestPointToOther, Color.red);
+
             // Visualise selection
             MakeGhost();
             return preferredLegoBrick;
@@ -144,12 +153,7 @@ public class LegoBrick : MonoBehaviour
     public void onGraspBegin()
     {
         // TODO on grasp highlighting
-        _grasped = true;
         Disconnect();
-        if (connectedToMe.Count > 0)
-        {
-            DisconnectPropagate();
-        }
     }
 
     public void onGraspStay()
@@ -159,11 +163,22 @@ public class LegoBrick : MonoBehaviour
 
     public void onGraspEnd()
     {
-        _grasped = false;
-
         // Start connection at Ghost
         if (_ghosting)
         {
+            Bounds ghostBounds = ghost.GetComponent<MeshFilter>().sharedMesh.bounds;
+            Collider[] hitColliders = Physics.OverlapBox(ghost.transform.position, ghostBounds.extents, ghost.transform.rotation, layerMask);
+
+            foreach (Collider hit in hitColliders)
+            {
+                if (hit.bounds.Contains(ghost.transform.TransformPoint(ghostBounds.center)) && hit.gameObject.GetComponent<LegoBrick>() != null)
+                {
+                    Debug.Log("Abort connect on account of ghost/brick intersection. " + hit.gameObject.name);
+                    DestroyGhost();
+                    return;
+                }
+            }
+
             _connecting = true;
             StartConnectLerp();
         }
@@ -171,7 +186,7 @@ public class LegoBrick : MonoBehaviour
 
     public void PositionGhost()
     {
-        if (!_ghosting || !_grasped || preferredLegoBrick.transform == null || preferredLegoBrick == this)
+        if (!_ghosting || preferredLegoBrick == null || preferredLegoBrick == this)
         {
             return;
         }
@@ -201,21 +216,10 @@ public class LegoBrick : MonoBehaviour
 
         // Rotation
 
-        // Must always be xz plane (world)
-        Vector3 alignedForward = LegoStaticUtils.ClosestLegoWorldAxis(transform.forward);
-        if (alignedForward.x == 0 && alignedForward.z == 0)
-        {
-            Debug.Log("! alignForward problem: " + alignedForward);
-            alignedForward = new Vector3(1, 0, 0);
-        }
-        
-        // Must always be up/down (world)
-        Vector3 alignedUp = Vector3.up;
-        //Debug.DrawRay(worldPoint, alignedUp, Color.cyan);
-        //Debug.DrawRay(worldPoint, alignedForward, Color.cyan);
+        // Must always be local xz plane
 
-        // Find closest non-vertical local axis in other to alignForward
-        Vector3 otherClosestAxis = LegoStaticUtils.ClosestLegoLocalDirection(alignedForward, hoverTarget.transform);
+        // Find closest non-vertical local axis in other to transform.forward
+        Vector3 otherClosestAxis = LegoStaticUtils.ClosestLegoLocalDirection(transform.forward, hoverTarget.transform);
         //Debug.DrawRay(other.transform.position, otherClosestAxis, Color.red);
         //Debug.DrawRay(other.transform.position, other.transform.up, Color.red);
 
@@ -223,9 +227,6 @@ public class LegoBrick : MonoBehaviour
         Quaternion otherLocalRotation = Quaternion.LookRotation(otherClosestAxis, hoverTarget.transform.up);
 
         ghost.transform.rotation = otherLocalRotation;
-
-        // TODO Add check for valid ghost position. Change color using Lego method?
-        // Split lego brick setup and lego brick behavior? Even more so when using imported bricks (XR bootstrap).
     }
 
     public LayerMask layerMask;
@@ -235,61 +236,75 @@ public class LegoBrick : MonoBehaviour
         {
             return;
         }
-
-        Collider[] hitColliders = Physics.OverlapBox(gameObject.transform.position, gameObject.GetComponent<Collider>().bounds.extents, gameObject.transform.rotation, layerMask);
-        // TODO Check valid ghosting position for connection
-        if (hitColliders.Length > 0)
-        {
-            Debug.Log("Abort connect");
-            return;
-        }
+        Disconnect();
 
         connectedTo = hoverTarget;
         hoverTarget = null;
 
-        // Stop collisions with connectedTo
-        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), true);
-
-        // TODO switch to parenting to common parent?
+        // TODO switch to parenting with common parent?
 
         connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
-        connectionJoint.enableCollision = false;
-        //connectionJoint.breakForce = Mathf.Infinity;
-        //connectionJoint.breakTorque = Mathf.Infinity;
-        //connectionJoint.anchor = new Vector3(0, 0, 0);
+        //connectionJoint.enableCollision = false;
+        connectionJoint.breakForce = float.PositiveInfinity;
+        connectionJoint.breakTorque = float.PositiveInfinity;
+        connectionJoint.autoConfigureConnectedAnchor = true;
+
         connectionJoint.xMotion = ConfigurableJointMotion.Locked;
         connectionJoint.yMotion = ConfigurableJointMotion.Locked;
         connectionJoint.zMotion = ConfigurableJointMotion.Locked;
         connectionJoint.angularXMotion = ConfigurableJointMotion.Locked;
         connectionJoint.angularYMotion = ConfigurableJointMotion.Locked;
         connectionJoint.angularZMotion = ConfigurableJointMotion.Locked;
-        //connectionJoint.targetPosition = new Vector3(0, 0, 0);
         connectionJoint.connectedBody = connectedTo.GetComponent<Rigidbody>();
 
         connectedTo.connectedToMe.Add(this);
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
         SetMass();
-        //MassPropagate();
         Debug.Log("Connection!");
     }
 
-    public void Disconnect()
+    public void Disconnect(bool propagate = false)
     {
         if (!IsConnected()) return;
 
-        // Re-allow collisions with connectedTo
-        //Physics.IgnoreCollision(this.GetComponent<Collider>(), connectedTo.GetComponent<Collider>(), false);
-
         Destroy(connectionJoint);
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
+
+        if (propagate && connectedToMe.Count > 0)
+        {
+            DisconnectPropagate();
+        }
         connectedTo.connectedToMe.Remove(this);
         connectedTo = null;
+    }
+
+    public void DisconnectPropagate()
+    {
+        foreach (var brick in connectedToMe)
+        {
+            //brick.DisconnectPropagate();
+            brick.Disconnect();
+        }
     }
 
     public void OnJointBreak(float breakForce)
     {
         Disconnect();
-        DisconnectPropagate();
+        Debug.Log("Joint broke");
+    }
+
+    IEnumerator UpdateOccupiedGridPositions()
+    {
+
+        while (true)
+        {
+            if (IsConnected())
+            {
+                LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
+            }
+            yield return new WaitForSeconds(10);
+        }
+
     }
 
     [Range(0, 100F)]
@@ -299,6 +314,13 @@ public class LegoBrick : MonoBehaviour
     {
         if (!_connecting)
         {
+            return;
+        }
+
+        if (ghost == null)
+        {
+            Debug.Log("No ghost connecting");
+            _connecting = false;
             return;
         }
 
@@ -326,9 +348,9 @@ public class LegoBrick : MonoBehaviour
         {
             //Debug.Log("event");
             _connecting = false;
+            EndConnectLerp();
             DestroyGhost();
             ConnectTo();
-            EndConnectLerp();
         }
 
         // Set final position
@@ -346,12 +368,12 @@ public class LegoBrick : MonoBehaviour
         }
 
         // Fade out ghost
-        //if (ghostRenderer)
-        //{
-        //    float alpha = ghostRenderer.sharedMaterial.GetFloat("_GlobalAlpha");
-        //    float finalAlpha = Mathf.Lerp(alpha, 0f, lerpSpeed * Time.deltaTime);
-        //    ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", finalAlpha);
-        //}
+        if (ghostRenderer)
+        {
+            float alpha = ghostRenderer.sharedMaterial.GetFloat("_GlobalAlpha");
+            float finalAlpha = Mathf.Lerp(alpha, 0f, lerpSpeed * Time.deltaTime);
+            ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", finalAlpha);
+        }
     }
 
     /*
@@ -377,17 +399,9 @@ public class LegoBrick : MonoBehaviour
     {
         int depth = LegoStaticUtils.FindLegoDepth(this);
         float mass = gameObject.GetComponent<Rigidbody>().mass;
-        gameObject.GetComponent<Rigidbody>().mass = mass < 0.01f ? 0.01f : mass -= 0.02f * depth;
+        mass -= 0.02f * depth;
+        gameObject.GetComponent<Rigidbody>().mass = mass < 0.01f ? 0.01f : mass;
         //Debug.Log("My mass: " + gameObject.GetComponent<Rigidbody>().mass);
-    }
-
-    public void DisconnectPropagate()
-    {
-        foreach (var brick in connectedToMe)
-        {
-            brick.Disconnect();
-            brick.DisconnectPropagate();
-        }
     }
 
     bool _ghosting = false;
@@ -417,6 +431,7 @@ public class LegoBrick : MonoBehaviour
     {
         if (_ghosting && ghost != null)
         {
+            // TODO fade out ghost
             _ghosting = false;
             Destroy(ghost);
             ghost = null;

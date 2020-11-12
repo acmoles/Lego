@@ -23,6 +23,7 @@ public class Game : Persistable
 
     public TextMeshProUGUI levelText;
     public InteractionManager manager;
+    public int initialSpawn = 10;
 
     [SerializeField] KeyCode create = KeyCode.C;
     [SerializeField] KeyCode reset = KeyCode.N;
@@ -67,7 +68,7 @@ public class Game : Persistable
                     levelText.text = loadedScene.buildIndex.ToString();
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
-                    for (int k = 0; k < 10; k++)
+                    for (int k = 0; k < initialSpawn; k++)
                     {
                         CreateShape();
                     }
@@ -212,10 +213,9 @@ public class Game : Persistable
         Array values = Enum.GetValues(typeof(LegoColors.Id));
         int randomIndex = UnityEngine.Random.Range(0, values.Length);
         var randomId = (LegoColors.Id)values.GetValue(randomIndex);
-        Color color = LegoColors.GetColour(randomId);
 
         //t.localScale = Vector3.one * Random.Range(0.5f, 2f);
-        instance.SetColor(color);
+        instance.SetColor((int)randomId);
         shapes.Add(instance);
     }
 

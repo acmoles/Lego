@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Leap.Unity;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,10 +31,11 @@ public class LegoBrickSetup : MonoBehaviour
 
         if (connectivity)
         {
+            string[] allowable = { "knob", "hollowKnob", "hollowKnobFitInPegHole" };
             // Find knobs and slots
             foreach (Transform field in connectivity)
             {
-                if (field.GetChild(0).name == "knob")
+                if (allowable.Contains(field.GetChild(0).name))
                 {
                     Transform knobsList = field;
                     foreach (Transform child in knobsList)

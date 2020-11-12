@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[SelectionBase]
 public class Shape : Persistable
 {
     int shapeId = int.MinValue;
@@ -11,7 +12,9 @@ public class Shape : Persistable
     [HideInInspector]
     public Mesh CombinedMesh;
 
-    public void init()
+    public int colorID = 0;
+
+    public void Awake()
     {
         Transform parentPart = transform.GetChild(0);
         Transform shell = parentPart.Find("Shell");
@@ -45,6 +48,14 @@ public class Shape : Persistable
             }
         }
 
+        if (colorID != 0)
+        {
+            SetColor(colorID);
+        }
+    }
+
+    public void init()
+    {
         GenerateCombinedMesh();
     }
 
@@ -100,8 +111,16 @@ public class Shape : Persistable
     static int colorPropertyId = Shader.PropertyToID("_Color");
     static MaterialPropertyBlock sharedPropertyBlock;
 
-    public void SetColor(Color color)
+    public void SetColor(int colorID)
     {
+        Color color = LegoColors.GetColour(colorID);
+        if (color == null)
+        {
+            Debug.LogError("No color at ID");
+            return;
+        }
+
+        this.colorID = colorID;
         this.color = color;
         if (sharedPropertyBlock == null)
         {
@@ -124,7 +143,7 @@ public class Shape : Persistable
     public override void Load(DataReader reader)
     {
         base.Load(reader);
-        SetColor(reader.Version > 0 ? reader.ReadColor() : Color.white);
+        //SetColor(reader.Version > 0 ? reader.ReadColor() : Color.white);
     }
 
 

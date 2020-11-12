@@ -183,6 +183,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CombinedMesh: {fileID: 0}
+  colorID: 0
 --- !u!114 &8478029926580532247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,14 +213,13 @@ MonoBehaviour:
   setup: {fileID: 0}
   visualize: 1
   kinematic: 0
-  smallDistance: 0.001
-  smallAngle: 1
+  smallDistance: 0.005
+  smallAngle: 0.5
   interactionBehaviour: {fileID: 4254323189066041613}
   maxGhostDistance: 0.1
   connectedTo: {fileID: 0}
-  rayDown: 0
   layerMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8192
   lerpSpeed: 20
   ghostMaterial: {fileID: 2100000, guid: e2670030b15168d4291e41b00cc8a21e, type: 2}
