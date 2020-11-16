@@ -4603,7 +4603,6 @@ GameObject:
   - component: {fileID: 1170282953}
   - component: {fileID: 1170282952}
   - component: {fileID: 1170282951}
-  - component: {fileID: 1170282955}
   - component: {fileID: 1170282956}
   - component: {fileID: 1170282957}
   m_Layer: 0
@@ -4708,15 +4707,6 @@ Transform:
   m_Father: {fileID: 931673006}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!45 &1170282955
-Skybox:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1170282950}
-  m_Enabled: 1
-  m_CustomSkybox: {fileID: 2100000, guid: 590348cc57fba33428599d8ba4805300, type: 2}
 --- !u!114 &1170282956
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4789,7 +4779,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee4ab9821096c489f84e50f35b7b9644, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _startDistance: 1
+  _startDistance: 0.7
   _useRadialDistance: 1
   _fadeToSkybox: 0
   _shader: {fileID: 4800000, guid: 3514cc2676a6c4db294c28459f22c359, type: 3}
