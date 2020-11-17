@@ -16,13 +16,16 @@ namespace Leap.Unity{
     protected override void Awake() {
       base.Awake();
       gameObject.SetActive(false);
-    }
+            //Debug.Log("Start");
+        }
 
   	protected override void HandReset() {
+            //Debug.Log("Reset");
       gameObject.SetActive(true);
     }
 
     protected override void HandFinish() {
+            //Debug.Log("End");
       gameObject.SetActive(false);
     }
 

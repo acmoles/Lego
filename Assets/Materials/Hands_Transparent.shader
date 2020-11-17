@@ -2,6 +2,7 @@ Shader "Oculus/Hands_Transparent" {
      Properties 
      {
        _InnerColor ("Inner Color", Color) = (1.0, 1.0, 1.0, 1.0)
+       _InnerAlpha("Inner Alpha", Range(0.0,1.0)) = 1.0
        _RimColor ("Rim Color", Color) = (0.26,0.19,0.16,0.0)
        _RimPower ("Rim Power", Range(0.5,8.0)) = 3.0
        _MainTex("Alpha Map", 2D) = "white" {}
@@ -37,9 +38,10 @@ Shader "Oculus/Hands_Transparent" {
             }
             ENDCG
         }
+
        
        CGPROGRAM
-       #pragma surface surf Lambert alpha:fade
+       #pragma surface surf Lambert alpha:fade noshadow addshadow vertex:vert
        
        struct Input
        {
@@ -50,6 +52,7 @@ Shader "Oculus/Hands_Transparent" {
        
        sampler2D _MainTex;
        float4 _InnerColor;
+       float _InnerAlpha;
        float4 _RimColor;
        float _RimPower;
 
@@ -69,17 +72,20 @@ Shader "Oculus/Hands_Transparent" {
        void surf (Input IN, inout SurfaceOutput o) 
        {
            o.Albedo = _InnerColor.rgb;
-           float3 c = tex2D(_MainTex, IN.uv_MainTex).rgb;
-           float blackness = (c.r + c.g + c.b) / 3.0;
-           o.Alpha = blackness;
 
            float3 normalDirection = SafeNormalize(o.Normal);
            float3 viewDir = SafeNormalize(IN.viewDir);
 
+           float3 c = tex2D(_MainTex, IN.uv_MainTex).rgb;
+           float blackness = (c.r + c.g + c.b) / 3.0;
+
            half rim = 1.0 - saturate(dot (viewDir, o.Normal));
+           half rim_2 = 1.5 - saturate(dot(viewDir, o.Normal));
+
            o.Emission = _RimColor.rgb * pow (rim, _RimPower) * blackness;
+           o.Alpha = blackness * _InnerAlpha * pow(rim_2, _RimPower);
        }
        ENDCG
      } 
-     Fallback "Diffuse"
+     Fallback "VertexLit"
    }
