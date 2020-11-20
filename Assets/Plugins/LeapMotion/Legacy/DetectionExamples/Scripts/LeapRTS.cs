@@ -22,6 +22,8 @@ namespace Leap.Unity {
       Full
     }
 
+        public float maxDistance = 0.05f;
+
     [SerializeField]
     private PinchDetector _pinchDetectorA;
     public PinchDetector PinchDetectorA {
@@ -81,22 +83,31 @@ namespace Leap.Unity {
         _showGUI = !_showGUI;
       }
 
-      bool didUpdate = false;
-      if(_pinchDetectorA != null)
-        didUpdate |= _pinchDetectorA.DidChangeFromLastFrame;
-      if(_pinchDetectorB != null)
-        didUpdate |= _pinchDetectorB.DidChangeFromLastFrame;
+        float PinchADist = float.PositiveInfinity;
+        float PinchBDist = float.PositiveInfinity;
 
-      if (didUpdate) {
-        transform.SetParent(null, true);
-      }
+        bool didUpdate = false;
+        if(_pinchDetectorA != null)
+        {
+            didUpdate |= _pinchDetectorA.DidChangeFromLastFrame;
+            PinchADist = (_pinchDetectorA.transform.position - transform.position).magnitude;
+        }
+        if (_pinchDetectorB != null)
+        {
+            didUpdate |= _pinchDetectorB.DidChangeFromLastFrame;
+            PinchBDist = (_pinchDetectorB.transform.position - transform.position).magnitude;
+        }
+
+        if (didUpdate) {
+            transform.SetParent(null, true);
+        }
 
       if (_pinchDetectorA != null && _pinchDetectorA.IsActive && 
           _pinchDetectorB != null &&_pinchDetectorB.IsActive) {
         transformDoubleAnchor();
-      } else if (_pinchDetectorA != null && _pinchDetectorA.IsActive) {
+      } else if (_pinchDetectorA != null && _pinchDetectorA.IsActive && PinchADist < maxDistance) {
         transformSingleAnchor(_pinchDetectorA);
-      } else if (_pinchDetectorB != null && _pinchDetectorB.IsActive) {
+      } else if (_pinchDetectorB != null && _pinchDetectorB.IsActive && PinchBDist < maxDistance) {
         transformSingleAnchor(_pinchDetectorB);
       }
 
@@ -162,8 +173,8 @@ namespace Leap.Unity {
     }
 
     private void transformSingleAnchor(PinchDetector singlePinch) {
-            //_anchor.position = singlePinch.Position;
-            _anchor.position = transform.position;
+        //_anchor.position = singlePinch.Position;
+        _anchor.position = transform.position;
       switch (_oneHandedRotationMethod) {
         case RotationMethod.None:
           break;

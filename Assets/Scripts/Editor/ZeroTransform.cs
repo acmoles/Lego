@@ -4,7 +4,24 @@ using UnityEditor;
 public class ResetGameObjectPosition
 {
     [MenuItem("GameObject/Reset Transform #0")]
-    static public void MoveSceneViewCamera()
+    static public void ResetTransformOne()
+    {
+        ResetTransform(1.0f);
+    }
+
+    [MenuItem("GameObject/Reset Transform 0.1 #1")]
+    static public void ResetTransformSmall()
+    {
+        ResetTransform(0.1f);
+    }
+
+    [MenuItem("GameObject/Reset Transform 0.05 #5")]
+    static public void ResetTransformSmaller()
+    {
+        ResetTransform(0.05f);
+    }
+
+    static public void ResetTransform(float factor)
     {
         GameObject[] selectedObjects = Selection.gameObjects;
 
@@ -25,7 +42,7 @@ public class ResetGameObjectPosition
 
             selected_object.transform.position = Vector3.zero + p_pos;
             selected_object.transform.rotation = Quaternion.identity * p_rot;
-            selected_object.transform.localScale = Vector3.one;
+            selected_object.transform.localScale = Vector3.one * factor;
         }
     }
 }

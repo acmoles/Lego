@@ -10,8 +10,8 @@ using Leap.Unity.Swizzle;
 using Leap.Unity.Attributes;
 using Leap.Unity.RuntimeGizmos;
 
-
-public class Turntable : MonoBehaviour, IRuntimeGizmoComponent {
+//, IRuntimeGizmoComponent
+public class Turntable : MonoBehaviour {
 
   //private PinchGesture pinchL, pinchR;
 
@@ -21,11 +21,40 @@ public class Turntable : MonoBehaviour, IRuntimeGizmoComponent {
   [SerializeField]
   private bool _drawGizmos = true;
 
-  [SerializeField]
-  private bool _pinchOnly = false;
+    [SerializeField]
+    private PinchDetector _pinchDetectorA;
+    public PinchDetector PinchDetectorA
+    {
+        get
+        {
+            return _pinchDetectorA;
+        }
+        set
+        {
+            _pinchDetectorA = value;
+        }
+    }
 
-  // [HideInInspector]
-  public Transform _transformToRotate;
+    [SerializeField]
+    private PinchDetector _pinchDetectorB;
+    public PinchDetector PinchDetectorB
+    {
+        get
+        {
+            return _pinchDetectorB;
+        }
+        set
+        {
+            _pinchDetectorB = value;
+        }
+    }
+
+    public Transform[] proximityObjects;
+    public float maxProximityDistance = 0.05f;
+    public bool useProximity = false;
+
+    // [HideInInspector]
+    public Transform _transformToRotate;
 
   [Header("Turntable Shape")]
   [SerializeField]
@@ -42,10 +71,10 @@ public class Turntable : MonoBehaviour, IRuntimeGizmoComponent {
   [Tooltip("The length of the edge that connects the upper and lower sections of the turntable.")]
   private float _edgeLength;
 
-  [Range(0, 90)]
-  [SerializeField]
-  [Tooltip("The angle the edge forms with the upper section of the turntable.")]
-  private float _edgeAngle = 45;
+  //[Range(0, 90)]
+  //[SerializeField]
+  //[Tooltip("The angle the edge forms with the upper section of the turntable.")]
+  //private float _edgeAngle = 45;
 
   [Header("Turntable Motion")]
   [MinValue(0)]
@@ -68,20 +97,14 @@ public class Turntable : MonoBehaviour, IRuntimeGizmoComponent {
   [Tooltip("The speed under which the turntable will stop completely.")]
   private float _minimumSpeed = 0.01f;
 
-  private Transform circle;
+  //private Transform circle;
 
   public Action OnTouch, OnRelease;
   private bool inContact = false;
 
-  private float _lowerLevelHeight {
+  private float _outerRadius {
     get {
-      return _tableHeight - _edgeLength * Mathf.Sin(_edgeAngle * Mathf.Deg2Rad);
-    }
-  }
-
-  private float _lowerLevelRadius {
-    get {
-      return _tableRadius + _edgeLength * Mathf.Cos(_edgeAngle * Mathf.Deg2Rad);
+      return _tableRadius + _edgeLength;
     }
   }
 
@@ -105,27 +128,29 @@ public class Turntable : MonoBehaviour, IRuntimeGizmoComponent {
     _smoothedVelocity.delay = _rotationSmoothing;
   }
 
-  //private bool isHandPinching(Hand hand){
-  //  if(hand.IsLeft)
-  //    return pinchL.isActive;
-  //  else return pinchR.isActive;
-  //}
+    private bool isHandPinching(Hand hand)
+    {
+        if (hand.IsLeft)
+            return _pinchDetectorA.IsActive;
+        else return _pinchDetectorB.IsActive;
+    }
 
-	void Start()
+
+void Start()
 	{
     //pinchL = HandUIManager.pinchLeft;
     //pinchR = HandUIManager.pinchRight;
     
-    circle = transform.GetChild(0);
-    _tableRadius = circle.localScale.x;
+    //circle = transform.GetChild(0);
+    //_tableRadius = circle.localScale.x;
     initOffset = transform.position - main.position;
 	}
 
   private void Update() {
-    if(main.hasChanged){
-     _tableRadius = circle.localScale.x; 
-     transform.position = main.position + initOffset;
-    } 
+    //if(main.hasChanged){
+    // _tableRadius = circle.localScale.x; 
+    // transform.position = main.position + initOffset;
+    //} 
 
     Utils.Swap(ref _currTipPoints, ref _prevTipPoints);
     
@@ -133,22 +158,26 @@ public class Turntable : MonoBehaviour, IRuntimeGizmoComponent {
 
     _currTipPoints.Clear();
     foreach (var hand in _provider.CurrentFrame.Hands) {
-      // if(isHandPinching(hand))
-      foreach (var finger in hand.Fingers) {
-        var key = new FingerPointKey() {
-          handId = hand.Id,
-          fingerType = finger.Type
-        };
+      //if(isHandPinching(hand)) {
+            foreach (var finger in hand.Fingers)
+            {
+                var key = new FingerPointKey()
+                {
+                    handId = hand.Id,
+                    fingerType = finger.Type
+                };
 
-        Vector3 worldTip = finger.Bone(Bone.BoneType.TYPE_DISTAL).NextJoint.ToVector3();
-        Vector3 localTip = transform.InverseTransformPoint(worldTip);
+                Vector3 worldTip = finger.Bone(Bone.BoneType.TYPE_DISTAL).NextJoint.ToVector3();
+                Vector3 localTip = transform.InverseTransformPoint(worldTip);
+                
+                if (isPointInsideTurntable(localTip) && closestPromimityDistance(worldTip) < maxProximityDistance)
+                {
+                    isTouching = true;
+                    _currTipPoints[key] = worldTip;
+                }
+            }
+        //}
 
-        if (isPointInsideTurntable(localTip)) {
-          
-          isTouching = true;
-          _currTipPoints[key] = worldTip;
-        } 
-      }
     }
 
     float deltaAngleSum = 0;
@@ -213,40 +242,85 @@ public class Turntable : MonoBehaviour, IRuntimeGizmoComponent {
   }
 
   private bool isPointInsideTurntable(Vector3 localPoint) {
-    if (localPoint.y > _tableHeight) {
-      return false;
-    }
+        if (localPoint.y > _tableHeight) {
+          return false;
+        }
 
-    float heightFactor = Mathf.Clamp01(Mathf.InverseLerp(_tableHeight, _lowerLevelHeight, localPoint.y));
-    float effectiveRadius = Mathf.Lerp(_tableRadius, _lowerLevelRadius, heightFactor);
+        //float heightFactor = Mathf.Clamp01(Mathf.InverseLerp(_tableHeight, _lowerLevelHeight, localPoint.y));
+        //float effectiveRadius = Mathf.Lerp(_tableRadius, _lowerLevelRadius, heightFactor);
+        //if (pointRadius > effectiveRadius || pointRadius < effectiveRadius - 0.05f) {
+        //  return false;
+        //}
 
-    float pointRadius = new Vector2(localPoint.x, localPoint.z).magnitude;
-    if (pointRadius > effectiveRadius || pointRadius < effectiveRadius - 0.05f) {
-      return false;
-    }
+        float pointRadius = new Vector2(localPoint.x, localPoint.z).magnitude;
 
-    return true;
+
+        if (pointRadius > _outerRadius || pointRadius < _tableRadius)
+        {
+            return false;
+        }
+
+        return true;
   }
 
-  public void OnDrawRuntimeGizmos(RuntimeGizmoDrawer drawer) {
-    if (!_drawGizmos) {
-      return;
+    private float closestPromimityDistance(Vector3 worldTip)
+    {
+        if (!useProximity) return 0f;
+        float closestDistSqrd = float.PositiveInfinity;
+
+        foreach (Transform proxy in proximityObjects)
+        {
+            float testDistanceSqrd = (proxy.position - worldTip).sqrMagnitude;
+            if (testDistanceSqrd < closestDistSqrd)
+            {
+                closestDistSqrd = testDistanceSqrd;
+            }
+        }
+        return closestDistSqrd;
     }
 
-    drawer.color = Color.blue;
-    drawer.RelativeTo(transform);
-    drawer.DrawLineWireCircle(new Vector3(0, _tableHeight, 0), Vector3.up, _tableRadius);
-    drawer.DrawLineWireCircle(new Vector3(0, _lowerLevelHeight, 0), Vector3.up, _lowerLevelRadius);
+    public float visualOffset = 0.02f;
+    public void OnDrawGizmos()
+    {
+        float offsetRadius = _tableRadius - visualOffset;
+        float offsetOuterRadius = _outerRadius - visualOffset;
 
-        for (int i = 0; i < 16; i++) {
-      float angle = i / 16.0f * Mathf.PI * 2;
-      Vector3 tablePoint = new Vector3(Mathf.Cos(angle) * _tableRadius, _tableHeight, Mathf.Sin(angle) * _tableRadius);
-      Vector3 lowerPoint = new Vector3(Mathf.Cos(angle) * _lowerLevelRadius, _lowerLevelHeight, Mathf.Sin(angle) * _lowerLevelRadius);
-      drawer.DrawLine(tablePoint, lowerPoint);
+        Utils.DrawCircle(new Vector3(transform.position.x, transform.position.y + _tableHeight, transform.position.z), Vector3.up, offsetRadius, Color.blue);
+        Utils.DrawCircle(new Vector3(transform.position.x, transform.position.y + _tableHeight, transform.position.z), Vector3.up, offsetOuterRadius, Color.red);
+        for (int i = 0; i < 32; i++)
+        {
+            float angle = i / 32.0f * Mathf.PI * 2;
+            Vector3 tablePoint = new Vector3(Mathf.Cos(angle) * offsetRadius, _tableHeight, Mathf.Sin(angle) * offsetRadius);
+            Vector3 lowerPoint = new Vector3(Mathf.Cos(angle) * offsetOuterRadius, _tableHeight, Mathf.Sin(angle) * offsetOuterRadius);
+            Debug.DrawLine(transform.position + tablePoint, transform.position + lowerPoint, Color.green);
+        }
     }
-  }
 
-  private struct FingerPointKey : IEquatable<FingerPointKey> {
+    public void OnDrawRuntimeGizmos(RuntimeGizmoDrawer drawer)
+    {
+        if (!_drawGizmos)
+        {
+            return;
+        }
+
+        float offsetRadius = _tableRadius - visualOffset;
+        float offsetOuterRadius = _outerRadius - visualOffset;
+
+        drawer.color = Color.blue;
+        drawer.RelativeTo(transform);
+        drawer.DrawLineWireCircle(new Vector3(0, _tableHeight, 0), Vector3.up, offsetRadius);
+        drawer.DrawLineWireCircle(new Vector3(0, _tableHeight, 0), Vector3.up, offsetOuterRadius);
+
+        for (int i = 0; i < 16; i++)
+        {
+            float angle = i / 16.0f * Mathf.PI * 2;
+            Vector3 tablePoint = new Vector3(Mathf.Cos(angle) * _tableRadius, _tableHeight, Mathf.Sin(angle) * offsetRadius);
+            Vector3 lowerPoint = new Vector3(Mathf.Cos(angle) * _outerRadius, _tableHeight, Mathf.Sin(angle) * offsetOuterRadius);
+            drawer.DrawLine(tablePoint, lowerPoint);
+        }
+    }
+
+    private struct FingerPointKey : IEquatable<FingerPointKey> {
     public int handId;
     public Finger.FingerType fingerType;
 

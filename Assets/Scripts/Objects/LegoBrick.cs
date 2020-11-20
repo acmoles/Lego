@@ -43,10 +43,16 @@ public class LegoBrick : MonoBehaviour
 
     void Awake()
     {
-        if (kinematic) GetComponent<Rigidbody>().isKinematic = true;
-        GetComponent<Rigidbody>().maxAngularVelocity = 10f;
+        if (TryGetComponent(out Rigidbody rb))
+        {
+            if (kinematic) rb.isKinematic = true;
+            rb.maxAngularVelocity = 10f;
+            rb.mass = mass;
+        }
+        
         if (interactionBehaviour) interactionBehaviour.manager = Game.Instance.manager;
         else Debug.Log("Missing interaction behaviour: " + gameObject.name);
+
         // TODO active brick after first grab - except if plate or checked bool
         allLegoBricks.Add(this);
         Init();
@@ -54,7 +60,6 @@ public class LegoBrick : MonoBehaviour
 
     public void Init()
     {
-        gameObject.GetComponent<Rigidbody>().mass = mass;
         // TODO currently used to color brick visual
         _shape = GetComponent<Shape>();
         _shape.init();
@@ -242,6 +247,7 @@ public class LegoBrick : MonoBehaviour
         hoverTarget = null;
 
         // TODO switch to parenting with common parent?
+        // Test keeping kinematic for connected bricks
 
         connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
         //connectionJoint.enableCollision = false;

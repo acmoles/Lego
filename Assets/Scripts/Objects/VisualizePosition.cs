@@ -6,18 +6,23 @@ public class VisualizePosition : ScriptableObject
 {
     //GameObject target;
     //Vector3 targetsLocalPosition;
+    public static List<GameObject> spheres = new List<GameObject>();
 
     public static void Create(GameObject target, Vector3 targetsLocalPosition, float size)
     {
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         sphere.GetComponent<Collider>().enabled = false;
-        sphere.GetComponent<MeshRenderer>().material.color = new Color(0.71f, 0.80f, 0.49f);
+
+        Material SphereMaterial = Resources.Load<Material>("Lime");
+
+        sphere.GetComponent<MeshRenderer>().material = SphereMaterial;
         sphere.transform.localScale = new Vector3(size, size, size);
         sphere.transform.position = targetsLocalPosition;
         if (target)
         {
             sphere.transform.parent = target.transform;
         }
+        spheres.Add(sphere);
 
         //var vp = sphere.AddComponent<VisualizePosition>();
         //vp.target = target;
