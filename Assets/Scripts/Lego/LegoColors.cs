@@ -68,6 +68,7 @@ public class LegoColors
     {
         if (idToColourGuide.ContainsKey(id))
         {
+            //Debug.Log("Hex of color " + id + " - " + ColorUtility.ToHtmlStringRGBA(idToColourGuide[id]));
             return idToColourGuide[id];
         }
         else

@@ -25,10 +25,12 @@ public class LegoBrick : MonoBehaviour
         }
     }
     static LegoBrick preferredLegoBrick;
+    public bool active = false;
 
     protected Shape _shape;
     [HideInInspector]
     public LegoBrickSetup setup;
+    private TurntableMember _turntableMember;
 
     public bool visualize = true;
     public bool kinematic = false;
@@ -64,6 +66,7 @@ public class LegoBrick : MonoBehaviour
         _shape = GetComponent<Shape>();
         _shape.init();
         setup = GetComponent<LegoBrickSetup>();
+        _turntableMember = GetComponent<TurntableMember>();
         StartCoroutine("UpdateOccupiedGridPositions");
     }
 
@@ -119,6 +122,8 @@ public class LegoBrick : MonoBehaviour
         // Nearby brick all
         foreach (var brick in allLegoBricks)
         {
+            if (!brick.active) continue;
+
             otherClosestPointToMe = brick.GetComponent<Collider>().ClosestPoint(this.transform.position);
             myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
 
@@ -185,7 +190,7 @@ public class LegoBrick : MonoBehaviour
             }
 
             _connecting = true;
-            StartConnectLerp();
+            MakeKinematic();
         }
     }
 
@@ -246,33 +251,42 @@ public class LegoBrick : MonoBehaviour
         connectedTo = hoverTarget;
         hoverTarget = null;
 
+        _turntableMember.AddToTurntable();
+
         // TODO switch to parenting with common parent?
         // Test keeping kinematic for connected bricks
 
-        connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
-        //connectionJoint.enableCollision = false;
-        connectionJoint.breakForce = float.PositiveInfinity;
-        connectionJoint.breakTorque = float.PositiveInfinity;
-        connectionJoint.autoConfigureConnectedAnchor = true;
+        //connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
+        ////connectionJoint.enableCollision = false;
+        //connectionJoint.breakForce = float.PositiveInfinity;
+        //connectionJoint.breakTorque = float.PositiveInfinity;
+        //connectionJoint.autoConfigureConnectedAnchor = true;
 
-        connectionJoint.xMotion = ConfigurableJointMotion.Locked;
-        connectionJoint.yMotion = ConfigurableJointMotion.Locked;
-        connectionJoint.zMotion = ConfigurableJointMotion.Locked;
-        connectionJoint.angularXMotion = ConfigurableJointMotion.Locked;
-        connectionJoint.angularYMotion = ConfigurableJointMotion.Locked;
-        connectionJoint.angularZMotion = ConfigurableJointMotion.Locked;
-        connectionJoint.connectedBody = connectedTo.GetComponent<Rigidbody>();
+        //connectionJoint.xMotion = ConfigurableJointMotion.Locked;
+        //connectionJoint.yMotion = ConfigurableJointMotion.Locked;
+        //connectionJoint.zMotion = ConfigurableJointMotion.Locked;
+        //connectionJoint.angularXMotion = ConfigurableJointMotion.Locked;
+        //connectionJoint.angularYMotion = ConfigurableJointMotion.Locked;
+        //connectionJoint.angularZMotion = ConfigurableJointMotion.Locked;
+        //connectionJoint.connectedBody = connectedTo.GetComponent<Rigidbody>();
 
         connectedTo.connectedToMe.Add(this);
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
         SetMass();
-        Debug.Log("Connection!");
+        active = true;
+        Debug.Log(gameObject.name + " connection to: " + connectedTo.name);
     }
 
-    public void Disconnect(bool propagate = false)
+    public void Disconnect(bool propagate = true)
     {
-        if (!IsConnected()) return;
+        if (!IsConnected()) {
+            Debug.Log("Not connected!");
+            return; 
+        }
 
+        Debug.Log(gameObject.name + " disconnection from " + connectedTo.name);
+        _turntableMember.RemoveFromTurntable();
+        StopKinematic();
         Destroy(connectionJoint);
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
 
@@ -293,11 +307,11 @@ public class LegoBrick : MonoBehaviour
         }
     }
 
-    public void OnJointBreak(float breakForce)
-    {
-        Disconnect();
-        Debug.Log("Joint broke");
-    }
+    //public void OnJointBreak(float breakForce)
+    //{
+    //    Disconnect();
+    //    Debug.Log("Joint broke");
+    //}
 
     IEnumerator UpdateOccupiedGridPositions()
     {
@@ -352,9 +366,8 @@ public class LegoBrick : MonoBehaviour
 
         if (Vector3.Distance(finalPosition, targetPosition) < smallDistance && Quaternion.Angle(targetRotation, finalRotation) < smallAngle)
         {
-            //Debug.Log("event");
+            //Debug.Log("event: " + Vector3.Distance(finalPosition, targetPosition) + " : " + Quaternion.Angle(targetRotation, finalRotation));
             _connecting = false;
-            EndConnectLerp();
             DestroyGhost();
             ConnectTo();
         }
@@ -381,25 +394,6 @@ public class LegoBrick : MonoBehaviour
             ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", finalAlpha);
         }
     }
-
-    /*
-    Could instead do 'attempt connect' with the LERP - if collision Abort _connecting = false maybe flash red!!!
-    With LERP maybe need to propagate kinematic = true through heirarchy of ghosttarget/ other to prevent physics impulse
-    Then turn it back on with a successful connection, or after an aborted connection
-    Could do sanity check...
-
-    Update: seems redundant
-    */
-    //private void OnCollisionEnter(Collision collision)
-    //{
-        //var hitbrick = collision.gameObject.GetComponent<LegoBrick>();
-        //if (hitbrick && _connecting)
-        //{
-        //    Debug.Log("abort lerp!");
-        //    _connecting = false;
-        //    EndConnectLerp();
-        //}
-    //}
 
     public void SetMass()
     {
@@ -452,11 +446,14 @@ public class LegoBrick : MonoBehaviour
         return connectedTo != null;
     }
 
-    public void EndConnectLerp()
+    public void StopKinematic()
     {
-        gameObject.GetComponent<Rigidbody>().isKinematic = false;
+        var rb = gameObject.GetComponent<Rigidbody>();
+        rb.isKinematic = false;
+        rb.WakeUp();
+        Debug.Log("Stop Kinematic");
     }
-    public void StartConnectLerp()
+    public void MakeKinematic()
     {
         gameObject.GetComponent<Rigidbody>().isKinematic = true;
     }

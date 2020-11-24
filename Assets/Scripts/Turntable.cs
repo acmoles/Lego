@@ -120,38 +120,29 @@ public class Turntable : MonoBehaviour {
   private bool isTouching = false;
 
   private void Awake() {
-    if (_provider == null) {
-      _provider = Hands.Provider;
-    }
-
     _smoothedVelocity = new SmoothedFloat();
     _smoothedVelocity.delay = _rotationSmoothing;
   }
 
-    private bool isHandPinching(Hand hand)
-    {
-        if (hand.IsLeft)
-            return _pinchDetectorA.IsActive;
-        else return _pinchDetectorB.IsActive;
-    }
+private bool isHandPinching(Hand hand)
+{
+    if (hand.IsLeft)
+        return _pinchDetectorA.IsActive;
+    else return _pinchDetectorB.IsActive;
+}
 
 
 void Start()
 	{
-    //pinchL = HandUIManager.pinchLeft;
-    //pinchR = HandUIManager.pinchRight;
-    
-    //circle = transform.GetChild(0);
-    //_tableRadius = circle.localScale.x;
-    initOffset = transform.position - main.position;
+        if (_provider == null) _provider = Hands.Provider;
+
+        if (_pinchDetectorA == null) _pinchDetectorA = Game.Instance.pinchDetectorA;
+        if (_pinchDetectorB == null) _pinchDetectorB = Game.Instance.pinchDetectorB;
+
+        initOffset = transform.position - main.position;
 	}
 
   private void Update() {
-    //if(main.hasChanged){
-    // _tableRadius = circle.localScale.x; 
-    // transform.position = main.position + initOffset;
-    //} 
-
     Utils.Swap(ref _currTipPoints, ref _prevTipPoints);
     
     isTouching = false;
@@ -282,6 +273,11 @@ void Start()
     public float visualOffset = 0.02f;
     public void OnDrawGizmos()
     {
+        if (!_drawGizmos)
+        {
+            return;
+        }
+
         float offsetRadius = _tableRadius - visualOffset;
         float offsetOuterRadius = _outerRadius - visualOffset;
 
@@ -302,7 +298,7 @@ void Start()
         {
             return;
         }
-
+        
         float offsetRadius = _tableRadius - visualOffset;
         float offsetOuterRadius = _outerRadius - visualOffset;
 

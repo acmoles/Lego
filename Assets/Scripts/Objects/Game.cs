@@ -6,6 +6,8 @@ using UnityEngine.SceneManagement;
 using System.IO;
 using TMPro;
 using Leap.Unity.Interaction;
+using Leap;
+using Leap.Unity;
 
 public class Game : Persistable
 {
@@ -21,8 +23,10 @@ public class Game : Persistable
     [SerializeField] int levelCount = 0;
     int loadedLevelBuildIndex = 0;
 
-    public TextMeshProUGUI levelText;
     public InteractionManager manager;
+    public LeapProvider provider;
+    public PinchDetector pinchDetectorA;
+    public PinchDetector pinchDetectorB;
     public int initialSpawn = 10;
 
     [SerializeField] KeyCode create = KeyCode.C;
@@ -65,7 +69,6 @@ public class Game : Persistable
                 {
                     Debug.Log("Editor active level: " + loadedScene.name);
                     loadedLevelBuildIndex = loadedScene.buildIndex;
-                    levelText.text = loadedScene.buildIndex.ToString();
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
                     for (int k = 0; k < initialSpawn; k++)
@@ -110,7 +113,6 @@ public class Game : Persistable
 
         Debug.Log("Loading level: " + levelBuildIndex);
         yield return SceneManager.LoadSceneAsync(levelBuildIndex, LoadSceneMode.Additive);
-        levelText.text = levelBuildIndex.ToString();
         Scene activeScene = SceneManager.GetSceneByBuildIndex(levelBuildIndex);
         SceneManager.SetActiveScene(activeScene);
         GetGameLevelFromScene(activeScene).SetActiveSpawnZone();

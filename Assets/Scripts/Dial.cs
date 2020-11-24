@@ -43,6 +43,9 @@ public class Dial : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (_pinchDetectorA == null) _pinchDetectorA = Game.Instance.pinchDetectorA;
+        if (_pinchDetectorB == null) _pinchDetectorB = Game.Instance.pinchDetectorB;
+
         control = transform.Find("Control");
         originalRotation = control.rotation;
 
