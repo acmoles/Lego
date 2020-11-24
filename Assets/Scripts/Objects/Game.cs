@@ -24,7 +24,7 @@ public class Game : Persistable
     int loadedLevelBuildIndex = 0;
 
     public InteractionManager manager;
-    public LeapProvider provider;
+    //public LeapProvider provider;
     public PinchDetector pinchDetectorA;
     public PinchDetector pinchDetectorB;
     public int initialSpawn = 10;

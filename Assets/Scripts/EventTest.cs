@@ -10,9 +10,12 @@ public class EventTest : MonoBehaviour
 
     public Action<string, int> NamedActionDelegate;
 
+    private Rigidbody rb;
+
     // Start is called before the first frame update
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
         OnTestEvent.Invoke();
         NamedActionDelegate = NamedMethod;
         NamedActionDelegate += OtherNamedMethod;
@@ -33,5 +36,10 @@ public class EventTest : MonoBehaviour
     public void OtherNamedMethod(string text, int digit)
     {
         Debug.Log("Other named said: " + text + digit);
+    }
+
+    public void ToggleKinematic()
+    {
+        rb.isKinematic = !rb.isKinematic;
     }
 }

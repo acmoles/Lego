@@ -200,6 +200,9 @@ public class LegoBrick : MonoBehaviour
 
             _connecting = true;
             MakeKinematic();
+        } else
+        {
+            StopKinematic();
         }
     }
 
@@ -255,7 +258,6 @@ public class LegoBrick : MonoBehaviour
         {
             return;
         }
-        Disconnect();
 
         connectedTo = hoverTarget;
         hoverTarget = null;
@@ -281,7 +283,7 @@ public class LegoBrick : MonoBehaviour
 
         connectedTo.connectedToMe.Add(this);
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
-        SetMass();
+        //SetMass();
         active = true;
         Debug.Log(gameObject.name + " connection to: " + connectedTo.name);
     }
@@ -295,8 +297,9 @@ public class LegoBrick : MonoBehaviour
 
         Debug.Log(gameObject.name + " disconnection from " + connectedTo.name);
         _turntableMember.RemoveFromTurntable();
-        StopKinematic();
-        Destroy(connectionJoint);
+
+        //Destroy(connectionJoint);
+
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
 
         if (propagate && connectedToMe.Count > 0)
@@ -312,6 +315,7 @@ public class LegoBrick : MonoBehaviour
         foreach (var brick in connectedToMe)
         {
             //brick.DisconnectPropagate();
+            Debug.Log(brick.name + " disconnect propagate!");
             brick.Disconnect();
         }
     }
@@ -337,7 +341,7 @@ public class LegoBrick : MonoBehaviour
     }
 
     [Range(0, 100F)]
-    public float lerpSpeed = 20f;
+    public float lerpSpeed = 10f;
 
     public void UpdateConnectionTo()
     {
@@ -404,25 +408,26 @@ public class LegoBrick : MonoBehaviour
         }
     }
 
-    public void SetMass()
-    {
-        Rigidbody rb = null;
+    //public void SetMass()
+    //{
+    //    Rigidbody rb = null;
 
-        if (interactionBehaviour != null)
-        {
-            rb = interactionBehaviour.rigidbody;
-        }
-        else
-        {
-            rb = gameObject.GetComponent<Rigidbody>();
-        }
+    //    if (interactionBehaviour != null)
+    //    {
+    //        rb = interactionBehaviour.rigidbody;
+    //    }
+    //    else
+    //    {
+    //        rb = gameObject.GetComponent<Rigidbody>();
+    //    }
 
-        int depth = LegoStaticUtils.FindLegoDepth(this);
-        float mass = rb.mass;
-        mass -= 0.02f * depth;
-        rb.mass = mass < 0.01f ? 0.01f : mass;
-        //Debug.Log("My mass: " + rb.mass);
-    }
+    //    int depth = LegoStaticUtils.FindLegoDepth(this);
+    //    float mass = rb.mass;
+    //    mass -= 0.02f * depth;
+    //    mass -= 0.02f * depth;
+    //    rb.mass = mass < 0.01f ? 0.01f : mass;
+    //    //Debug.Log("My mass: " + rb.mass);
+    //}
 
     bool _ghosting = false;
     GameObject ghost;
@@ -478,9 +483,14 @@ public class LegoBrick : MonoBehaviour
         {
             rb = gameObject.GetComponent<Rigidbody>();
         }
-        rb.isKinematic = false;
-        rb.WakeUp();
-        Debug.Log("Stop Kinematic");
+
+        if (rb.isKinematic)
+        {
+            rb.isKinematic = false;
+            if (rb.IsSleeping()) Debug.Log("Stop Kinematic was sleeping " + gameObject.name);
+            rb.WakeUp();
+            Debug.Log("Stop Kinematic" + gameObject.name);
+        }
     }
     public void MakeKinematic()
     {
@@ -494,7 +504,12 @@ public class LegoBrick : MonoBehaviour
         {
             rb = gameObject.GetComponent<Rigidbody>();
         }
-        rb.isKinematic = true;
-        rb.Sleep();
+
+        if (!rb.isKinematic)
+        {
+            rb.isKinematic = true;
+            rb.Sleep();
+            Debug.Log("Start Kinematic " + gameObject.name);
+        }
     }
 }
