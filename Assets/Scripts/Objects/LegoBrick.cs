@@ -45,13 +45,22 @@ public class LegoBrick : MonoBehaviour
 
     void Awake()
     {
-        if (TryGetComponent(out Rigidbody rb))
+        if (interactionBehaviour != null)
         {
-            if (kinematic) rb.isKinematic = true;
-            rb.maxAngularVelocity = 10f;
-            rb.mass = mass;
+            if (kinematic) interactionBehaviour.rigidbody.isKinematic = true;
+            interactionBehaviour.rigidbody.maxAngularVelocity = 10f;
+            interactionBehaviour.rigidbody.mass = mass;
         }
-        
+        else
+        {
+            if (TryGetComponent(out Rigidbody rb))
+            {
+                if (kinematic) rb.isKinematic = true;
+                rb.maxAngularVelocity = 10f;
+                rb.mass = mass;
+            }
+        }
+
         if (interactionBehaviour) interactionBehaviour.manager = Game.Instance.manager;
         else Debug.Log("Missing interaction behaviour: " + gameObject.name);
 
@@ -397,11 +406,22 @@ public class LegoBrick : MonoBehaviour
 
     public void SetMass()
     {
+        Rigidbody rb = null;
+
+        if (interactionBehaviour != null)
+        {
+            rb = interactionBehaviour.rigidbody;
+        }
+        else
+        {
+            rb = gameObject.GetComponent<Rigidbody>();
+        }
+
         int depth = LegoStaticUtils.FindLegoDepth(this);
-        float mass = gameObject.GetComponent<Rigidbody>().mass;
+        float mass = rb.mass;
         mass -= 0.02f * depth;
-        gameObject.GetComponent<Rigidbody>().mass = mass < 0.01f ? 0.01f : mass;
-        //Debug.Log("My mass: " + gameObject.GetComponent<Rigidbody>().mass);
+        rb.mass = mass < 0.01f ? 0.01f : mass;
+        //Debug.Log("My mass: " + rb.mass);
     }
 
     bool _ghosting = false;
@@ -448,13 +468,33 @@ public class LegoBrick : MonoBehaviour
 
     public void StopKinematic()
     {
-        var rb = gameObject.GetComponent<Rigidbody>();
+        Rigidbody rb = null;
+
+        if (interactionBehaviour != null)
+        {
+            rb = interactionBehaviour.rigidbody;
+        }
+        else
+        {
+            rb = gameObject.GetComponent<Rigidbody>();
+        }
         rb.isKinematic = false;
         rb.WakeUp();
         Debug.Log("Stop Kinematic");
     }
     public void MakeKinematic()
     {
-        gameObject.GetComponent<Rigidbody>().isKinematic = true;
+        Rigidbody rb = null;
+
+        if (interactionBehaviour != null)
+        {
+            rb = interactionBehaviour.rigidbody;
+        }
+        else
+        {
+            rb = gameObject.GetComponent<Rigidbody>();
+        }
+        rb.isKinematic = true;
+        rb.Sleep();
     }
 }
