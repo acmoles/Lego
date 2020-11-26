@@ -2,49 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Leap.Unity;
+using System;
 
 [SelectionBase]
-public class Dial : MonoBehaviour
+public class Dial : InteractionEventHoverSender
 {
-    public float maxDistance = 0.05f;
     private Quaternion originalRotation;
     private Quaternion startPinchRotationA = Quaternion.identity;
     private Quaternion startPinchRotationB = Quaternion.identity;
 
-    [SerializeField]
-    private PinchDetector _pinchDetectorA;
-    public PinchDetector PinchDetectorA
-    {
-        get
-        {
-            return _pinchDetectorA;
-        }
-        set
-        {
-            _pinchDetectorA = value;
-        }
-    }
-
-    [SerializeField]
-    private PinchDetector _pinchDetectorB;
-    public PinchDetector PinchDetectorB
-    {
-        get
-        {
-            return _pinchDetectorB;
-        }
-        set
-        {
-            _pinchDetectorB = value;
-        }
-    }
-
     private Transform control;
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
-        if (_pinchDetectorA == null) _pinchDetectorA = Game.Instance.pinchDetectorA;
-        if (_pinchDetectorB == null) _pinchDetectorB = Game.Instance.pinchDetectorB;
+        base.Start();
 
         control = transform.Find("Control");
         originalRotation = control.rotation;
@@ -100,11 +71,13 @@ public class Dial : MonoBehaviour
 
     private void drawSpheres()
     {
+
         foreach (var item in VisualizePosition.spheres)
         {
             Destroy(item);
         }
         VisualizePosition.spheres.Clear();
+
         if (rotationHeld)
         {
             for (int i = 0; i < positionsList.Count; i++)
@@ -138,46 +111,33 @@ public class Dial : MonoBehaviour
 
     private bool rotationHeld = false;
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
+        base.Update();
+
         drawSpheres();
 
-        float PinchADist = float.PositiveInfinity;
-        float PinchBDist = float.PositiveInfinity;
-
-        bool didUpdate = false;
-        if (_pinchDetectorA != null)
-        {
-            didUpdate |= _pinchDetectorA.DidChangeFromLastFrame;
-            PinchADist = (_pinchDetectorA.transform.position - transform.position).magnitude;
-        }
-        if (_pinchDetectorB != null)
-        {
-            didUpdate |= _pinchDetectorB.DidChangeFromLastFrame;
-            PinchBDist = (_pinchDetectorB.transform.position - transform.position).magnitude;
-        }
-
-        if (_pinchDetectorA != null && _pinchDetectorA.IsActive && PinchADist < maxDistance)
+        if (pinchDetectorLeft.IsActive && hovered)
         {
             if (!rotationHeld)
             {
                 rotationHeld = true;
-                startPinchRotationA = _pinchDetectorA.Rotation;
+                startPinchRotationA = pinchDetectorLeft.Rotation;
                 return;
             }
-            RotateDial(_pinchDetectorA, startPinchRotationA);
+            RotateDial(pinchDetectorLeft, startPinchRotationA);
         }
-        else if (_pinchDetectorB != null && _pinchDetectorB.IsActive && PinchBDist < maxDistance)
+        else if (pinchDetectorRight.IsActive && hovered)
         {
             if (!rotationHeld)
             {
                 rotationHeld = true;
-                startPinchRotationB = _pinchDetectorB.Rotation;
+                startPinchRotationB = pinchDetectorRight.Rotation;
                 return;
             }
-            RotateDial(_pinchDetectorB, startPinchRotationB);
+            RotateDial(pinchDetectorRight, startPinchRotationB);
         }
-        else
+        else if (rotationHeld)
         {
             rotationHeld = false;
             originalRotation = control.rotation;

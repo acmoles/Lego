@@ -678,6 +678,11 @@ PrefabInstance:
       propertyPath: m_TagString
       value: TurntableBase
       objectReference: {fileID: 0}
+    - target: {fileID: 1501480984733019070, guid: a27b41f16c08007409e53d88adc1893a,
+        type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2869384737674300928, guid: a27b41f16c08007409e53d88adc1893a,
         type: 3}
       propertyPath: m_LocalRotation.x
@@ -3360,36 +3365,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!1 &800188820
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 800188821}
-  m_Layer: 0
-  m_Name: GameObject (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &800188821
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 800188820}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0008651337, y: -0.15734208, z: 0.14475265}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &806918816
 GameObject:
   m_ObjectHideFlags: 0
@@ -3401,7 +3376,7 @@ GameObject:
   - component: {fileID: 806918817}
   - component: {fileID: 806918818}
   m_Layer: 0
-  m_Name: PinchDetectorA
+  m_Name: PinchDetectorLeft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4775,6 +4750,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalPosition.z
       value: 0.000000004685717
+      objectReference: {fileID: 0}
+    - target: {fileID: -6578289884287300324, guid: bea3bd198083a6f4b8919651bc1b8475,
+        type: 3}
+      propertyPath: m_CastShadows
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -5879742281281733053, guid: bea3bd198083a6f4b8919651bc1b8475,
         type: 3}
@@ -6954,8 +6934,10 @@ MonoBehaviour:
   storage: {fileID: 577140618}
   levelCount: 3
   manager: {fileID: 1234418988}
-  pinchDetectorA: {fileID: 806918818}
-  pinchDetectorB: {fileID: 2059607118}
+  pinchDetectorLeft: {fileID: 806918818}
+  pinchDetectorRight: {fileID: 2059607118}
+  handLeft: {fileID: 796096533}
+  handRight: {fileID: 110128359}
   initialSpawn: 20
   create: 99
   reset: 110
@@ -8632,7 +8614,7 @@ GameObject:
   - component: {fileID: 2059607119}
   - component: {fileID: 2059607118}
   m_Layer: 0
-  m_Name: PinchDetectorB
+  m_Name: PinchDetectorRight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

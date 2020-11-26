@@ -25,8 +25,8 @@ public class Game : Persistable
 
     public InteractionManager manager;
     //public LeapProvider provider;
-    public PinchDetector pinchDetectorA;
-    public PinchDetector pinchDetectorB;
+    public PinchDetector pinchDetectorLeft, pinchDetectorRight;
+    public InteractionHand handLeft, handRight;
     public int initialSpawn = 10;
 
     [SerializeField] KeyCode create = KeyCode.C;
@@ -232,6 +232,7 @@ public class Game : Persistable
 
         LegoBrick lb = instance.GetComponent<LegoBrick>();
         lb.Init();
+
         Transform t = instance.transform;
         t.localPosition = SpawnZoneLevel.SpawnPoint;
         t.localRotation = UnityEngine.Random.rotation;
@@ -240,8 +241,22 @@ public class Game : Persistable
         int randomIndex = UnityEngine.Random.Range(0, values.Length);
         var randomId = (LegoColors.Id)values.GetValue(randomIndex);
 
-        //t.localScale = Vector3.one * Random.Range(0.5f, 2f);
         instance.SetColor((int)randomId);
+        shapes.Add(instance);
+    }
+
+    void CreateInPlace(int colorID, Transform target, int index, int materialIndex = 0)
+    {
+        Shape instance = shapeFactory.Get(index, materialIndex);
+
+        LegoBrick lb = instance.GetComponent<LegoBrick>();
+        lb.Init();
+
+        Transform t = instance.transform;
+        t.localPosition = target.position;
+        t.localRotation = target.rotation;
+
+        instance.SetColor(colorID);
         shapes.Add(instance);
     }
 

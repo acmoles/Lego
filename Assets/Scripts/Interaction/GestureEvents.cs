@@ -62,6 +62,7 @@ public class GestureEvents : MonoBehaviour
 
     private void onThumbShown()
     {
-        Debug.Log("Thumbs up shown");
+        //Debug.Log("Thumbs up shown");
+        // TODO add flag - fires too often - keystroke?
     }
 }

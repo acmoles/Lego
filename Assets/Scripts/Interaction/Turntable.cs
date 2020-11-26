@@ -11,7 +11,7 @@ using Leap.Unity.Attributes;
 using Leap.Unity.RuntimeGizmos;
 
 //, IRuntimeGizmoComponent
-public class Turntable : MonoBehaviour {
+public class Turntable : InteractionEventSender {
 
   //private PinchGesture pinchL, pinchR;
 
@@ -22,30 +22,30 @@ public class Turntable : MonoBehaviour {
   private bool _drawGizmos = true;
 
     [SerializeField]
-    private PinchDetector _pinchDetectorA;
-    public PinchDetector PinchDetectorA
+    private PinchDetector _pinchDetectorLeft;
+    public PinchDetector PinchDetectorLeft
     {
         get
         {
-            return _pinchDetectorA;
+            return _pinchDetectorLeft;
         }
         set
         {
-            _pinchDetectorA = value;
+            _pinchDetectorLeft = value;
         }
     }
 
     [SerializeField]
-    private PinchDetector _pinchDetectorB;
-    public PinchDetector PinchDetectorB
+    private PinchDetector _pinchDetectorRight;
+    public PinchDetector PinchDetectorRight
     {
         get
         {
-            return _pinchDetectorB;
+            return _pinchDetectorRight;
         }
         set
         {
-            _pinchDetectorB = value;
+            _pinchDetectorRight = value;
         }
     }
 
@@ -99,7 +99,6 @@ public class Turntable : MonoBehaviour {
 
   //private Transform circle;
 
-  public Action OnTouch, OnRelease;
   private bool inContact = false;
 
   private float _outerRadius {
@@ -127,8 +126,8 @@ public class Turntable : MonoBehaviour {
 private bool isHandPinching(Hand hand)
 {
     if (hand.IsLeft)
-        return _pinchDetectorA.IsActive;
-    else return _pinchDetectorB.IsActive;
+        return _pinchDetectorLeft.IsActive;
+    else return _pinchDetectorRight.IsActive;
 }
 
 
@@ -136,8 +135,8 @@ void Start()
 	{
         if (_provider == null) _provider = Hands.Provider;
 
-        if (_pinchDetectorA == null) _pinchDetectorA = Game.Instance.pinchDetectorA;
-        if (_pinchDetectorB == null) _pinchDetectorB = Game.Instance.pinchDetectorB;
+        if (_pinchDetectorLeft == null) _pinchDetectorLeft = Game.Instance.pinchDetectorLeft;
+        if (_pinchDetectorRight == null) _pinchDetectorRight = Game.Instance.pinchDetectorRight;
 
         initOffset = transform.position - main.position;
 	}
@@ -189,12 +188,12 @@ void Start()
 
     if(Mathf.Abs(deltaAngleSum) > 0 && !inContact){
       inContact = true;
-      if(OnTouch != null) OnTouch();
+      _OnTouch();
     }
 
     if(!isTouching && inContact){
       inContact = false;
-      if(OnRelease != null) OnRelease();
+      _OnRelease();
     }
 
 
