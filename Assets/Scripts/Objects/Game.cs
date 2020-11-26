@@ -71,10 +71,8 @@ public class Game : Persistable
                     loadedLevelBuildIndex = loadedScene.buildIndex;
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
-                    for (int k = 0; k < initialSpawn; k++)
-                    {
-                        CreateShape();
-                    }
+
+                    CreateOneOfEach();
 
                 } else if (loadedScene.name.Contains("ObjectLevel ") && notInLevel)
                 {
@@ -96,8 +94,9 @@ public class Game : Persistable
                 return;
             }
         }
-        // Else load level 1
-        StartCoroutine(LoadLevel(1));
+        // Else load level 3
+        StartCoroutine(LoadLevel(3));
+        CreateOneOfEach();
     }
 
     IEnumerator LoadLevel(int levelBuildIndex)
@@ -203,9 +202,34 @@ public class Game : Persistable
         }
     }
 
-    void CreateShape()
+    void CreateRandomSet()
     {
-        Shape instance = shapeFactory.GetRandom();
+        for (int k = 0; k < initialSpawn; k++)
+        {
+            CreateShape();
+        }
+    }
+
+    void CreateOneOfEach()
+    {
+        for (int k = 0; k < shapeFactory.CountBrickPrefabs(); k++)
+        {
+            CreateShape(k);
+        }
+    }
+
+    void CreateShape(int index = -1, int materialIndex = 0)
+    {
+
+        Shape instance;
+        if (index < 0)
+        {
+            instance = shapeFactory.GetRandom();
+        } else
+        {
+            instance = shapeFactory.Get(index, materialIndex);
+        }
+
         LegoBrick lb = instance.GetComponent<LegoBrick>();
         lb.Init();
         Transform t = instance.transform;
@@ -220,19 +244,6 @@ public class Game : Persistable
         instance.SetColor((int)randomId);
         shapes.Add(instance);
     }
-
-    //void CreatePlate() {
-    //    Debug.Log("Create plate");
-    //    Shape instance = shapeFactory.GetPlate();
-    //    LegoBrick lb = instance.GetComponent<LegoBrick>();
-    //    lb.Init();
-    //    Transform t = instance.transform;
-    //    Vector3 position = new Vector3(0.12f, 1.455f, 0.4f);
-    //    t.localPosition = position;
-    //    instance.SetColor(Color.white);
-
-    //    shapes.Add(instance);
-    //}
 
     void DestroyShape()
     {
@@ -287,47 +298,9 @@ public class Game : Persistable
         }
     }
 
-
-
-    //void Save()
-    //{
-    //    using (
-    //        var writer = new BinaryWriter(File.Open(savePath, FileMode.Create))
-    //    )
-    //        {
-    //        writer.Write(objects.Count);
-    //        for (int i = 0; i < objects.Count; i++)
-    //        {
-    //            Transform t = objects[i];
-    //            writer.Write(t.localPosition.x);
-    //            writer.Write(t.localPosition.y);
-    //            writer.Write(t.localPosition.z);
-    //        }
-    //        Debug.Log("count saved: " + objects.Count);
-    //    }
-    //}
-
-    //void Load()
-    //{
-    //    NewGame();
-    //    using (
-    //       var reader = new BinaryReader(File.Open(savePath, FileMode.Open))
-    //    )
-    //        {
-    //        int count = reader.ReadInt32();
-    //        Debug.Log("count loaded: " + count);
-    //        for (int i = 0; i < count; i++)
-    //        {
-    //            Vector3 p;
-    //            p.x = reader.ReadSingle();
-    //            p.y = reader.ReadSingle();
-    //            p.z = reader.ReadSingle();
-    //            Transform t = Instantiate(prefab);
-    //            t.localPosition = p;
-    //            objects.Add(t);
-    //        }
-    //    }
-    //}
-
+    public static void Warn(string msg, UnityEngine.Object obj)
+    {
+        Debug.Log("<b>Game: </b>" + msg, obj);
+    }
 
 }

@@ -314,8 +314,8 @@ public class LegoBrick : MonoBehaviour
     {
         foreach (var brick in connectedToMe)
         {
-            //brick.DisconnectPropagate();
             Debug.Log(brick.name + " disconnect propagate!");
+            brick.StopKinematic();
             brick.Disconnect();
         }
     }

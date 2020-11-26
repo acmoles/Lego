@@ -292,29 +292,30 @@ void Start()
         }
     }
 
-    public void OnDrawRuntimeGizmos(RuntimeGizmoDrawer drawer)
-    {
-        if (!_drawGizmos)
-        {
-            return;
-        }
+    // Also re-subclass runtime gizmo class
+    //public void OnDrawRuntimeGizmos(RuntimeGizmoDrawer drawer)
+    //{
+    //    if (!_drawGizmos)
+    //    {
+    //        return;
+    //    }
         
-        float offsetRadius = _tableRadius - visualOffset;
-        float offsetOuterRadius = _outerRadius - visualOffset;
+    //    float offsetRadius = _tableRadius - visualOffset;
+    //    float offsetOuterRadius = _outerRadius - visualOffset;
 
-        drawer.color = Color.blue;
-        drawer.RelativeTo(transform);
-        drawer.DrawLineWireCircle(new Vector3(0, _tableHeight, 0), Vector3.up, offsetRadius);
-        drawer.DrawLineWireCircle(new Vector3(0, _tableHeight, 0), Vector3.up, offsetOuterRadius);
+    //    drawer.color = Color.blue;
+    //    drawer.RelativeTo(transform);
+    //    drawer.DrawLineWireCircle(new Vector3(0, _tableHeight, 0), Vector3.up, offsetRadius);
+    //    drawer.DrawLineWireCircle(new Vector3(0, _tableHeight, 0), Vector3.up, offsetOuterRadius);
 
-        for (int i = 0; i < 16; i++)
-        {
-            float angle = i / 16.0f * Mathf.PI * 2;
-            Vector3 tablePoint = new Vector3(Mathf.Cos(angle) * _tableRadius, _tableHeight, Mathf.Sin(angle) * offsetRadius);
-            Vector3 lowerPoint = new Vector3(Mathf.Cos(angle) * _outerRadius, _tableHeight, Mathf.Sin(angle) * offsetOuterRadius);
-            drawer.DrawLine(tablePoint, lowerPoint);
-        }
-    }
+    //    for (int i = 0; i < 16; i++)
+    //    {
+    //        float angle = i / 16.0f * Mathf.PI * 2;
+    //        Vector3 tablePoint = new Vector3(Mathf.Cos(angle) * _tableRadius, _tableHeight, Mathf.Sin(angle) * offsetRadius);
+    //        Vector3 lowerPoint = new Vector3(Mathf.Cos(angle) * _outerRadius, _tableHeight, Mathf.Sin(angle) * offsetOuterRadius);
+    //        drawer.DrawLine(tablePoint, lowerPoint);
+    //    }
+    //}
 
     private struct FingerPointKey : IEquatable<FingerPointKey> {
     public int handId;

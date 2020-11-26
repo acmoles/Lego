@@ -118,5 +118,10 @@ public class ShapeFactory : ScriptableObject
         }
     }
 
+    public int CountBrickPrefabs()
+    {
+        return prefabs.Length;
+    }
+
 
 }
