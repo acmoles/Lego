@@ -96,4 +96,38 @@ public class LegoColors
         return GetColour(id.ToString());
     }
 
+    public static HashSet<Id> pickable = new HashSet<Id>()
+    {
+          // Universal.
+          Id.White,
+          Id.BrickYellow,
+          Id.BrightRed,
+          Id.BrightBlue,
+          Id.BrightYellow,
+          Id.Black,
+          //Id.DarkGreen,
+          //Id.ReddishBrown,
+          Id.MediumStoneGrey,
+          //Id.DarkStoneGrey,
+
+          // Generic.
+          //Id.Nougat,
+          Id.BrightGreen,
+          //Id.MediumBlue,
+          Id.BrightOrange,
+          Id.BrightYellowGreen,
+          //Id.EarthBlue,
+          //Id.EarthGreen,
+          //Id.NewDarkRed,
+          Id.BrightPurple,
+          //Id.LightPurple,
+          //Id.MediumAzur,
+          Id.MediumLavender,
+    };
+
+    public static bool IsPickable(Id id)
+    {
+        return pickable.Contains(id);
+    }
+
 }

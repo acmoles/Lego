@@ -108,8 +108,11 @@ public class Shape : Persistable
     }
 
     public Color color { get; set; }
-    static int colorPropertyId = Shader.PropertyToID("_Color");
-    static MaterialPropertyBlock sharedPropertyBlock;
+
+    [HideInInspector]
+    public static int colorPropertyId = Shader.PropertyToID("_Color");
+    [HideInInspector]
+    public static MaterialPropertyBlock sharedPropertyBlock;
 
     public void SetColor(int colorID)
     {

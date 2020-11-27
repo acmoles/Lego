@@ -8,10 +8,11 @@ using System;
 public class Dial : InteractionEventHoverSender
 {
     private Quaternion originalRotation;
-    private Quaternion startPinchRotationA = Quaternion.identity;
-    private Quaternion startPinchRotationB = Quaternion.identity;
+    private Quaternion startPinchRotationLeft = Quaternion.identity;
+    private Quaternion startPinchRotationRight = Quaternion.identity;
 
     private Transform control;
+    private Transform selectables;
     // Start is called before the first frame update
     protected override void Start()
     {
@@ -20,51 +21,85 @@ public class Dial : InteractionEventHoverSender
         control = transform.Find("Control");
         originalRotation = control.rotation;
 
+        selectables = transform.Find("Selectables");
+
         CreatePositions();
+        DialTo(LegoColors.Id.BrightYellow);
     }
 
-    private List<Vector3> positionsList;
+    Dictionary<LegoColors.Id, GameObject> positionsList;
+    public Material SphereMaterial;
     public float sensitivity;
     public float dialValue = 0;
 
-    public int positions = 3;
     public float radius = 1.0f;
     public float arcWidth = 360f;
+    public float sphereSize = 0.005f;
+    public float selectedSize = 0.02f;
+    LegoColors.Id activeColor;
     void CreatePositions()
     {
-        positionsList = new List<Vector3>();
+        positionsList = new Dictionary<LegoColors.Id, GameObject>();
 
         float x;
         float y = 0f;
         float z;
 
         float angle = 0f;
-
-        for (int i = 0; i < positions; i++)
+        foreach (var colorID in LegoColors.pickable)
         {
             z = Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
             x = Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
 
-            positionsList.Add(new Vector3(x, y, z));
+            GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.GetComponent<Collider>().enabled = false;
 
-            angle += (arcWidth / positions);
+            var renderer = sphere.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = SphereMaterial;
+            SetColor(colorID, renderer);
+
+            sphere.transform.localScale = new Vector3(sphereSize, sphereSize, sphereSize);
+            sphere.transform.parent = selectables.transform;
+            sphere.transform.localPosition = new Vector3(x, y, z);
+
+            positionsList[colorID] = sphere;
+
+            angle += (arcWidth / LegoColors.pickable.Count);
         }
+    }
+
+    [HideInInspector]
+    public static int colorPropertyId = Shader.PropertyToID("_Color");
+    [HideInInspector]
+    public static int alphaPropertyId = Shader.PropertyToID("_Alpha");
+    [HideInInspector]
+    public static MaterialPropertyBlock sharedPropertyBlockAlpha;
+
+    public void SetColor(LegoColors.Id colorID, MeshRenderer rendererToSet)
+    {
+        Color color = LegoColors.GetColour(colorID);
+
+        if (sharedPropertyBlockAlpha == null)
+        {
+            sharedPropertyBlockAlpha = new MaterialPropertyBlock();
+        }
+        sharedPropertyBlockAlpha.SetColor(colorPropertyId, color);
+        rendererToSet.SetPropertyBlock(sharedPropertyBlockAlpha);
     }
 
     private void OnDrawGizmos()
     {
         if (rotationHeld)
         {
-            for (int i = 0; i < positionsList.Count; i++)
+            foreach (var item in positionsList)
             {
-                //Debug.Log(positionsList[i]);
-                Vector3 pos = transform.TransformPoint(positionsList[i]);
+                Vector3 pos = item.Value.transform.position;
                 Debug.DrawLine(transform.position, pos, Color.green);
             }
 
-            int active = ClosestPosition(control.right);
+            LegoColors.Id active = ClosestPosition(control.forward);
 
-            Utils.DrawCircle(transform.TransformPoint(positionsList[active]), Vector3.up, 0.02f, Color.red);
+            Utils.DrawCircle(positionsList[active].transform.position, Vector3.up, 0.02f, Color.red);
 
         }
     }
@@ -80,62 +115,60 @@ public class Dial : InteractionEventHoverSender
 
         if (rotationHeld)
         {
-            for (int i = 0; i < positionsList.Count; i++)
+            foreach (var item in positionsList)
             {
-                //Debug.Log(positionsList[i]);
-                Vector3 pos = transform.TransformPoint(positionsList[i]);
+                Vector3 pos = transform.TransformPoint(item.Value.transform.position);
                 VisualizePosition.Create(this.gameObject, pos, 0.005f);
             }
 
-            int active = ClosestPosition(control.right);
-            VisualizePosition.Create(this.gameObject, transform.TransformPoint(positionsList[active]), 0.02f);
+            LegoColors.Id active = ClosestPosition(control.right);
+            VisualizePosition.Create(this.gameObject, transform.TransformPoint(positionsList[active].transform.position), 0.02f);
         }
     }
 
-    private int ClosestPosition(Vector3 direction)
+    private LegoColors.Id ClosestPosition(Vector3 direction)
     {
         var maxDot = -Mathf.Infinity;
-        int index = 0;
+        LegoColors.Id key = 0;
 
-        for (int i = 0; i < positionsList.Count; i++)
+        foreach (var item in positionsList)
         {
-            var t = Vector3.Dot(direction, positionsList[i]);
+            var t = Vector3.Dot(direction, item.Value.transform.position);
             if (t > maxDot)
             {
-                index = i;
+                key = item.Key;
                 maxDot = t;
             }
         }
-        return index;
+        return key;
     }
 
     private bool rotationHeld = false;
-    // Update is called once per frame
     protected override void Update()
     {
         base.Update();
 
-        drawSpheres();
+        //drawSpheres();
 
         if (pinchDetectorLeft.IsActive && hovered)
         {
             if (!rotationHeld)
             {
                 rotationHeld = true;
-                startPinchRotationA = pinchDetectorLeft.Rotation;
+                startPinchRotationLeft = pinchDetectorLeft.Rotation;
                 return;
             }
-            RotateDial(pinchDetectorLeft, startPinchRotationA);
+            RotateDial(pinchDetectorLeft, startPinchRotationLeft);
         }
         else if (pinchDetectorRight.IsActive && hovered)
         {
             if (!rotationHeld)
             {
                 rotationHeld = true;
-                startPinchRotationB = pinchDetectorRight.Rotation;
+                startPinchRotationRight = pinchDetectorRight.Rotation;
                 return;
             }
-            RotateDial(pinchDetectorRight, startPinchRotationB);
+            RotateDial(pinchDetectorRight, startPinchRotationRight);
         }
         else if (rotationHeld)
         {
@@ -144,14 +177,13 @@ public class Dial : InteractionEventHoverSender
         }
     }
 
-  
     private void RotateDial(PinchDetector singlePinch, Quaternion startPinchRotation)
     {
-        Vector3 p = singlePinch.Rotation * Vector3.right;
+        Vector3 p = singlePinch.Rotation * Vector3.forward;
         p.y = 0;
         Quaternion currentRotation = Quaternion.LookRotation(p);
 
-        Vector3 l = startPinchRotation * Vector3.right;
+        Vector3 l = startPinchRotation * Vector3.forward;
         l.y = 0;
         Quaternion startRotation = Quaternion.LookRotation(l);
 
@@ -160,6 +192,13 @@ public class Dial : InteractionEventHoverSender
         Quaternion target = originalRotation * difference;
 
         control.rotation = Quaternion.Slerp(control.rotation, target, Time.deltaTime * 20f);
-        //transform.LookAt(p);
+    }
+
+    private void DialTo(LegoColors.Id colorID)
+    {
+        activeColor = colorID;
+        Vector3 l = positionsList[colorID].transform.localPosition;
+        control.rotation = Quaternion.LookRotation(l, Vector3.up);
+        originalRotation = control.rotation;
     }
 }
