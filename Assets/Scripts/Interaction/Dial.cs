@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Leap.Unity;
 using System;
+using DG.Tweening;
 
 [SelectionBase]
 public class Dial : InteractionEventHoverSender
@@ -13,7 +14,7 @@ public class Dial : InteractionEventHoverSender
 
     private Transform control;
     private Transform selectables;
-    // Start is called before the first frame update
+
     protected override void Start()
     {
         base.Start();
@@ -34,15 +35,15 @@ public class Dial : InteractionEventHoverSender
 
     public float radius = 1.0f;
     public float arcWidth = 360f;
-    public float sphereSize = 0.005f;
-    public float selectedSize = 0.02f;
+    public float sphereScale = 0.005f;
+    public float selectedScale = 0.02f;
     LegoColors.Id activeColor;
     void CreatePositions()
     {
         positionsList = new Dictionary<LegoColors.Id, GameObject>();
 
         float x;
-        float y = 0f;
+        float y = restY;
         float z;
 
         float angle = 0f;
@@ -58,7 +59,7 @@ public class Dial : InteractionEventHoverSender
             renderer.sharedMaterial = SphereMaterial;
             SetColor(colorID, renderer);
 
-            sphere.transform.localScale = new Vector3(sphereSize, sphereSize, sphereSize);
+            sphere.transform.localScale = new Vector3(sphereScale, sphereScale, sphereScale);
             sphere.transform.parent = selectables.transform;
             sphere.transform.localPosition = new Vector3(x, y, z);
 
@@ -87,24 +88,114 @@ public class Dial : InteractionEventHoverSender
         rendererToSet.SetPropertyBlock(sharedPropertyBlockAlpha);
     }
 
-    private void OnDrawGizmos()
+    public void SetShapeColor(LegoColors.Id colorID)
     {
-        if (rotationHeld)
+        // Used for dial body - uses static material property block in Shape
+
+        Color color = LegoColors.GetColour(colorID);
+
+        if (Shape.sharedPropertyBlock == null)
         {
-            foreach (var item in positionsList)
+            Shape.sharedPropertyBlock = new MaterialPropertyBlock();
+        }
+        Shape.sharedPropertyBlock.SetColor(Shape.colorPropertyId, color);
+
+        dialBottom.SetPropertyBlock(Shape.sharedPropertyBlock);
+        dialTop.SetPropertyBlock(Shape.sharedPropertyBlock);
+
+        // Set color of held brick(s)
+        if (Game.Instance.heldShapes.Count > 0)
+        {
+            foreach (var item in Game.Instance.heldShapes)
             {
-                Vector3 pos = item.Value.transform.position;
-                Debug.DrawLine(transform.position, pos, Color.green);
+                item.SetColor((int)colorID);
             }
-
-            LegoColors.Id active = ClosestPosition(control.forward);
-
-            Utils.DrawCircle(positionsList[active].transform.position, Vector3.up, 0.02f, Color.red);
-
         }
     }
 
-    private void drawSpheres()
+    public void SetAlpha(float alpha)
+    {
+        SphereMaterial.SetFloat("_Alpha", alpha);
+    }
+
+    public float fadeUpTime = 0.4f;
+    public float restY = -0.004f;
+    Transform[] transformsToUpdate;
+    void FadeUpPositions(bool incoming = false)
+    {
+        TweenParams tParms = new TweenParams().SetEase(Ease.InExpo);
+        float targetY = restY;
+        float finalAlpha = 0f;
+        float currentAlpha = 1f;
+        if (incoming)
+        {
+            targetY = 0f;
+            finalAlpha = 1f;
+            currentAlpha = 0f;
+            tParms.SetEase(Ease.InOutExpo);
+        }
+
+        transformsToUpdate = new Transform[positionsList.Count];
+        int index = 0;
+        foreach (var item in positionsList)
+        {
+            transformsToUpdate[index] = item.Value.transform;
+            index++;
+        }
+
+        //Debug.Log("FadeUp " + incoming + " - to change " + transformsToUpdate.Length);
+
+        Tween t = DOTween.To(() => { return currentAlpha; }, x => { currentAlpha = x; }, finalAlpha, fadeUpTime).SetAs(tParms);
+        t.OnUpdate(() =>
+        {
+            TweenCallback(currentAlpha, targetY, incoming);
+        });
+    }
+
+    public MeshRenderer dialBottom;
+    public SkinnedMeshRenderer dialTop;
+    void TweenCallback (float alpha, float targetY, bool incoming)
+    {
+        SetAlpha(alpha);
+        dialTop.SetBlendShapeWeight(0, alpha * 100f);
+        float t = incoming ? alpha : 1f - alpha;
+
+        for (int i = 0; i < transformsToUpdate.Length; i++)
+        {
+            Vector3 vec = new Vector3(transformsToUpdate[i].localPosition.x, transformsToUpdate[i].localPosition.y, transformsToUpdate[i].localPosition.z);
+            vec.y = Mathf.Lerp(transformsToUpdate[i].localPosition.y, targetY, t);
+            transformsToUpdate[i].localPosition = vec;
+        }
+    }
+
+    void Highlight (GameObject go)
+    {
+        go.transform.DOScale(selectedScale, fadeUpTime).SetEase(Ease.OutElastic);
+    }
+
+    void Unhighlight(GameObject go)
+    {
+        go.transform.DOScale(sphereScale, fadeUpTime);
+    }
+
+    //private void OnDrawGizmos()
+    //{
+    //    if (rotationHeld)
+    //    {
+    //        //foreach (var item in positionsList)
+    //        //{
+    //        //    Vector3 pos = item.Value.transform.position;
+    //        //    Debug.DrawLine(transform.position, pos, Color.green);
+    //        //}
+
+    //        LegoColors.Id active = ClosestPosition(control.forward);
+
+    //        Utils.DrawCircle(positionsList[active].transform.position, Vector3.up, selectedScale, Color.red);
+
+    //    }
+    //}
+
+    private void drawTestSpheres()
     {
 
         foreach (var item in VisualizePosition.spheres)
@@ -143,10 +234,19 @@ public class Dial : InteractionEventHoverSender
         return key;
     }
 
+    LegoColors.Id lastActiveColor = 0;
     private bool rotationHeld = false;
     protected override void Update()
     {
         base.Update();
+
+        if (lastActiveColor != activeColor)
+        {
+            Highlight(positionsList[activeColor]);
+            SetShapeColor(activeColor);
+            if (lastActiveColor != 0) Unhighlight(positionsList[lastActiveColor]);
+        }
+        lastActiveColor = activeColor;
 
         //drawSpheres();
 
@@ -155,6 +255,7 @@ public class Dial : InteractionEventHoverSender
             if (!rotationHeld)
             {
                 rotationHeld = true;
+                FadeUpPositions(true);
                 startPinchRotationLeft = pinchDetectorLeft.Rotation;
                 return;
             }
@@ -165,6 +266,7 @@ public class Dial : InteractionEventHoverSender
             if (!rotationHeld)
             {
                 rotationHeld = true;
+                FadeUpPositions(true);
                 startPinchRotationRight = pinchDetectorRight.Rotation;
                 return;
             }
@@ -173,6 +275,7 @@ public class Dial : InteractionEventHoverSender
         else if (rotationHeld)
         {
             rotationHeld = false;
+            FadeUpPositions(false);
             originalRotation = control.rotation;
         }
     }
@@ -192,6 +295,9 @@ public class Dial : InteractionEventHoverSender
         Quaternion target = originalRotation * difference;
 
         control.rotation = Quaternion.Slerp(control.rotation, target, Time.deltaTime * 20f);
+
+        // Update active color
+        activeColor = ClosestPosition(control.forward);
     }
 
     private void DialTo(LegoColors.Id colorID)

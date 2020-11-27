@@ -28,6 +28,18 @@ public class Game : Persistable
     public PinchDetector pinchDetectorLeft, pinchDetectorRight;
     public InteractionHand handLeft, handRight;
     public int initialSpawn = 10;
+    private HashSet<Shape> _heldShapes;
+    public HashSet<Shape> heldShapes
+    {
+        get
+        {
+            if (_heldShapes == null)
+            {
+                _heldShapes = new HashSet<Shape>();
+            }
+            return _heldShapes;
+        }
+    }
 
     [SerializeField] KeyCode create = KeyCode.C;
     [SerializeField] KeyCode reset = KeyCode.N;

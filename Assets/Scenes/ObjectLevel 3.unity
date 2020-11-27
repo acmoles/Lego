@@ -448,6 +448,10 @@ MonoBehaviour:
   arcWidth: 360
   sphereSize: 0.005
   selectedSize: 0.02
+  fadeUpTime: 0.4
+  restY: -0.004
+  dialBottom: {fileID: 845286560}
+  dialTop: {fileID: 1092977880}
 --- !u!4 &340387908
 Transform:
   m_ObjectHideFlags: 0
@@ -3291,6 +3295,12 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &845286560 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -8654425753766930615, guid: d29cbcdc4bf21644abed1693c6aa5be7,
+    type: 3}
+  m_PrefabInstance: {fileID: 1943170644}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &886852887
 GameObject:
   m_ObjectHideFlags: 0
@@ -3531,6 +3541,12 @@ MonoBehaviour:
   nonMember: 1
   turntableTrigger: 0
   isTouchingTurntable: 0
+--- !u!137 &1092977880 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -2783724165557556372, guid: d29cbcdc4bf21644abed1693c6aa5be7,
+    type: 3}
+  m_PrefabInstance: {fileID: 1943170644}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1187018069
 GameObject:
   m_ObjectHideFlags: 0
@@ -4952,7 +4968,7 @@ PrefabInstance:
     - target: {fileID: -2783724165557556372, guid: d29cbcdc4bf21644abed1693c6aa5be7,
         type: 3}
       propertyPath: m_BlendShapeWeights.Array.data[0]
-      value: 100
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d29cbcdc4bf21644abed1693c6aa5be7,
         type: 3}

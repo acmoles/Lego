@@ -171,8 +171,9 @@ public class LegoBrick : MonoBehaviour
 
     public void onGraspBegin()
     {
-        // TODO on grasp highlighting
+        // TODO on grasp brick highlighting
         Disconnect();
+        Game.Instance.heldShapes.Add(this._shape);
     }
 
     public void onGraspStay()
@@ -182,6 +183,14 @@ public class LegoBrick : MonoBehaviour
 
     public void onGraspEnd()
     {
+        if (Game.Instance.heldShapes.Contains(this._shape))
+        {
+            Game.Instance.heldShapes.Remove(this._shape);
+        } else
+        {
+            Debug.LogWarning("Shape missing from list?");
+        }
+
         // Start connection at Ghost
         if (_ghosting)
         {

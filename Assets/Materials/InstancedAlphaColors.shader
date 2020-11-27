@@ -28,10 +28,10 @@
 
 		half _Glossiness;
 		half _Metallic;
+		half _Alpha;
 
 		UNITY_INSTANCING_BUFFER_START(Props)
 			UNITY_DEFINE_INSTANCED_PROP(fixed4, _Color)
-			UNITY_DEFINE_INSTANCED_PROP(half, _Alpha)
 		UNITY_INSTANCING_BUFFER_END(Props)
 
 		void surf (Input IN, inout SurfaceOutputStandard o) {
@@ -40,7 +40,7 @@
 			o.Albedo = c.rgb;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
-			o.Alpha = c.a * UNITY_ACCESS_INSTANCED_PROP(Props, _Alpha);
+			o.Alpha = c.a * _Alpha;
 		}
 		ENDCG
 	}
