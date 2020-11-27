@@ -46,6 +46,7 @@ public class Game : Persistable
     [SerializeField] KeyCode save = KeyCode.S;
     [SerializeField] KeyCode load = KeyCode.L;
     [SerializeField] KeyCode destroy = KeyCode.X;
+    [SerializeField] KeyCode disconnectAll = KeyCode.D;
 
     public float CreationSpeed { get; set; }
     float creationProgress;
@@ -177,6 +178,10 @@ public class Game : Persistable
         else if (Input.GetKeyDown(reset))
         {
             NewGame();
+        }
+        else if (Input.GetKeyDown(disconnectAll))
+        {
+            LegoBrick.DisconnectAllBricks();
         }
         else if (Input.GetKeyDown(save))
         {

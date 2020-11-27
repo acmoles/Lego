@@ -329,6 +329,15 @@ public class LegoBrick : MonoBehaviour
         }
     }
 
+    public static void DisconnectAllBricks()
+    {
+        foreach (var brick in allLegoBricks)
+        {
+            brick.Disconnect();
+            brick.StopKinematic();
+        }
+    }
+
     //public void OnJointBreak(float breakForce)
     //{
     //    Disconnect();
