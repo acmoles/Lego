@@ -26,7 +26,7 @@ public class AttachToLegoBehaviour : MonoBehaviour
             collider.center = rootGameObject.transform.TransformPoint(bounds.center);
             collider.size = rootGameObject.transform.TransformPoint(bounds.size);
 
-            var localPath = "Assets/Prefabs/Lego/" + rootGameObject.name + ".prefab";
+            var localPath = "Assets/Prefabs/Lego/Extra/" + rootGameObject.name + ".prefab";
             GameObject prefabVariant = PrefabUtility.SaveAsPrefabAsset(objSource, localPath);
         }
     }

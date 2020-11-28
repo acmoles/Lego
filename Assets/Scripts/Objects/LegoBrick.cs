@@ -64,7 +64,6 @@ public class LegoBrick : MonoBehaviour
         if (interactionBehaviour) interactionBehaviour.manager = Game.Instance.manager;
         else Debug.Log("Missing interaction behaviour: " + gameObject.name);
 
-        // TODO active brick after first grab - except if plate or checked bool
         allLegoBricks.Add(this);
         Init();
     }
@@ -132,6 +131,7 @@ public class LegoBrick : MonoBehaviour
         foreach (var brick in allLegoBricks)
         {
             if (!brick.active) continue;
+            // TODO set brick as inactive if all knobs filled
 
             otherClosestPointToMe = brick.GetComponent<Collider>().ClosestPoint(this.transform.position);
             myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
@@ -234,25 +234,30 @@ public class LegoBrick : MonoBehaviour
             DestroyGhost();
             return;
         }
-        Vector3 otherWorldClosestPoint = hoverTarget.transform.TransformPoint(otherClosestKnob.position);
+        Vector3 otherWorldClosestKnob = hoverTarget.transform.TransformPoint(otherClosestKnob.position);
 
         LocalPosition myClosestSlot = LegoStaticUtils.FindClosestPosition(
-            transform.InverseTransformPoint(otherWorldClosestPoint),
+            transform.InverseTransformPoint(otherWorldClosestKnob),
             setup.slots
         );
-        Vector3 ghostWorldClosestSlot = ghost.transform.TransformPoint(myClosestSlot.position); //!
+        Vector3 ghostClosestSlot = ghost.transform.TransformPoint(myClosestSlot.position);
 
-        if (visualize) Debug.DrawLine(transform.position, ghostWorldClosestSlot, Color.cyan);
-        ghost.transform.position += otherWorldClosestPoint - ghostWorldClosestSlot;
+        if (visualize) Debug.DrawLine(transform.position, ghostClosestSlot, Color.cyan);
+        ghost.transform.position += otherWorldClosestKnob - ghostClosestSlot;
 
         // Rotation
 
         // Must always be local xz plane
+        // TODO use (local?) rotation of otherWorldClosestKnob rather than hoverTarget rotation
+        // enabling bricks with side oriented positions.
 
         // Find closest non-vertical local axis in other to transform.forward
         Vector3 otherClosestAxis = LegoStaticUtils.ClosestLegoLocalDirection(transform.forward, hoverTarget.transform);
-        //Debug.DrawRay(other.transform.position, otherClosestAxis, Color.red);
-        //Debug.DrawRay(other.transform.position, other.transform.up, Color.red);
+        if (visualize)
+        {
+            Debug.DrawRay(hoverTarget.transform.position, otherClosestAxis, Color.red);
+            Debug.DrawRay(hoverTarget.transform.position, hoverTarget.transform.up, Color.red);
+        }
 
         // Make that forward direction for LookRotation
         Quaternion otherLocalRotation = Quaternion.LookRotation(otherClosestAxis, hoverTarget.transform.up);
@@ -272,9 +277,6 @@ public class LegoBrick : MonoBehaviour
         hoverTarget = null;
 
         _turntableMember.AddToTurntable();
-
-        // TODO switch to parenting with common parent?
-        // Test keeping kinematic for connected bricks
 
         //connectionJoint = gameObject.AddComponent<ConfigurableJoint>();
         ////connectionJoint.enableCollision = false;

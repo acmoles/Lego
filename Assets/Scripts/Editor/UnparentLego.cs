@@ -11,7 +11,8 @@ public class UnparentLego : MonoBehaviour
     {
         foreach (GameObject rootGameObject in Selection.gameObjects)
         {
-            Transform lvl1 = rootGameObject.transform.GetChild(0);
+            //Transform lvl1 = rootGameObject.transform.GetChild(0);
+            Transform lvl1 = rootGameObject.transform;
             lvl1.parent = null;
 
             if (lvl1.name == "Main model")
@@ -32,6 +33,11 @@ public class UnparentLego : MonoBehaviour
             DestroyImmediate(lvl1.gameObject);
             DestroyImmediate(rootGameObject);
         }
+    }
+
+    public static void ChangeMaterial()
+    {
+
     }
 
 }

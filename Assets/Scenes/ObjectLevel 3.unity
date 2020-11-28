@@ -446,8 +446,8 @@ MonoBehaviour:
   dialValue: 0
   radius: 0.08
   arcWidth: 360
-  sphereSize: 0.005
-  selectedSize: 0.02
+  sphereScale: 0.005
+  selectedScale: 0.02
   fadeUpTime: 0.4
   restY: -0.004
   dialBottom: {fileID: 845286560}
@@ -3020,6 +3020,9 @@ MonoBehaviour:
   hoverDistance: 0.05
   closestHand: {fileID: 0}
   closestHandDist: Infinity
+  highlightSphere: {fileID: 1187018070}
+  lerpSpeed: 0.01
+  highlightScale: {x: 0.1, y: 0.1, z: 0.1}
 --- !u!1 &673019032
 GameObject:
   m_ObjectHideFlags: 0

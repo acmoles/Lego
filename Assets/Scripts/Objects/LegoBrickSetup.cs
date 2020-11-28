@@ -31,21 +31,29 @@ public class LegoBrickSetup : MonoBehaviour
 
         if (connectivity)
         {
-            string[] allowable = { "knob", "hollowKnob", "hollowKnobFitInPegHole" };
+            string[] allowableKnob = { "knob", "hollowKnob", "hollowKnobFitInPegHole", "knobFitInPegHole" };
+            string[] allowableSlot = { "antiKnob" };
             // Find knobs and slots
             foreach (Transform field in connectivity)
             {
-                if (allowable.Contains(field.GetChild(0).name))
+                if (allowableKnob.Contains(field.GetChild(0).name))
                 {
                     Transform knobsList = field;
                     foreach (Transform child in knobsList)
                     {
+                        // TODO update LocalPosition to include a local rotation field
+                        // Calculate it from knobsList rotation (will only have rotation if side-brick)
+                        // This can then be used in Ghosting
                         LocalPosition knob = new LocalPosition();
                         knob.position = child.localPosition + knobsList.localPosition;
                         // Prebake realistic scale
                         knob.position = transform.GetChild(0).TransformVector(knob.position);
                         if (report) Debug.LogFormat("Knob at: {0}", knob.position);
-                        knobs.Add(knob);
+                        if (allowableKnob.Contains(child.name))
+                        {
+                            knobs.Add(knob);
+                        }
+                        
                     }
                 } else
                 {
@@ -54,10 +62,13 @@ public class LegoBrickSetup : MonoBehaviour
                     {
                         LocalPosition slot = new LocalPosition();
                         slot.position = child.localPosition + slotsList.localPosition;
-                        // Preback realistic scale
+                        // Prebake realistic scale
                         slot.position = transform.GetChild(0).TransformVector(slot.position);
                         if (report) Debug.LogFormat("Slot at: {0}", slot.position);
-                        slots.Add(slot);
+                        if (allowableSlot.Contains(child.name))
+                        {
+                            slots.Add(slot);
+                        }
                     }
                 }
             }
