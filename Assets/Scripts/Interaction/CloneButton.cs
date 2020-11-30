@@ -1,11 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Leap.Unity.Interaction;
+using Leap;
+using Leap.Unity;
 
 public class CloneButton : InteractionEventHoverSender
 {
     public Transform highlightSphere;
-    public float lerpSpeed = 0.01f;
+    [Range(0, 100F)]
+    public float lerpSpeed = 10f;
     public Vector3 highlightScale = new Vector3(0.1f, 0.1f, 0.1f);
 
     private Vector3 originalScale;
@@ -22,9 +26,10 @@ public class CloneButton : InteractionEventHoverSender
     {
         base.Update();
 
-        if(hovered)
+        if(hovered && isClosestHandHolding())
         {
-            highlightSphere.position = Vector3.Lerp(highlightSphere.position, closestHand.position, lerpSpeed * Time.deltaTime);
+            PinchDetector p = closestHand.isLeft ? pinchDetectorLeft : pinchDetectorRight;
+            highlightSphere.position = Vector3.Lerp(highlightSphere.position, p.Position, lerpSpeed * Time.deltaTime);
             highlightSphere.localScale = Vector3.Lerp(highlightSphere.localScale, highlightScale, lerpSpeed * Time.deltaTime);
         } else
         {

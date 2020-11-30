@@ -26,6 +26,9 @@ public class Dial : InteractionEventHoverSender
 
         CreatePositions();
         DialTo(LegoColors.Id.BrightYellow);
+
+        innerColorPropertyId = Shader.PropertyToID("_InnerColor");
+        rimColorPropertyId = Shader.PropertyToID("_RimColor");
     }
 
     Dictionary<LegoColors.Id, GameObject> positionsList;
@@ -57,6 +60,7 @@ public class Dial : InteractionEventHoverSender
 
             var renderer = sphere.GetComponent<MeshRenderer>();
             renderer.sharedMaterial = SphereMaterial;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             SetColor(colorID, renderer);
 
             sphere.transform.localScale = new Vector3(sphereScale, sphereScale, sphereScale);
@@ -88,6 +92,8 @@ public class Dial : InteractionEventHoverSender
         rendererToSet.SetPropertyBlock(sharedPropertyBlockAlpha);
     }
 
+    int innerColorPropertyId;
+    int rimColorPropertyId;
     public void SetShapeColor(LegoColors.Id colorID)
     {
         // Used for dial body - uses static material property block in Shape
@@ -99,9 +105,11 @@ public class Dial : InteractionEventHoverSender
             Shape.sharedPropertyBlock = new MaterialPropertyBlock();
         }
         Shape.sharedPropertyBlock.SetColor(Shape.colorPropertyId, color);
-
         dialBottom.SetPropertyBlock(Shape.sharedPropertyBlock);
-        dialTop.SetPropertyBlock(Shape.sharedPropertyBlock);
+
+        dialTop.material.SetColor(innerColorPropertyId, color);
+        dialTop.material.SetColor(rimColorPropertyId, color);
+        //dialTop.SetPropertyBlock(Shape.sharedPropertyBlock);
 
         // Set color of held brick(s)
         if (Game.Instance.heldShapes.Count > 0)

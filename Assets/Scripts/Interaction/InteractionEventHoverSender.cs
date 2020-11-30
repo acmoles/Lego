@@ -11,6 +11,7 @@ public class InteractionEventHoverSender : InteractionEventSender
     protected InteractionHand handRight, handLeft;
     protected PinchDetector pinchDetectorLeft, pinchDetectorRight;
     public float hoverDistance = 0.05f;
+    public Transform hoverTarget;
 
     [HideInInspector] public InteractionHand closestHand;
     [HideInInspector] public float closestHandDist = float.PositiveInfinity;
@@ -68,19 +69,21 @@ public class InteractionEventHoverSender : InteractionEventSender
         }
     }
 
-    private float HandDistance(InteractionHand hand)
+    protected float HandDistance(InteractionHand hand)
     {
         if (!hand.isTracked) return float.PositiveInfinity;
-        return (transform.position - hand.position).sqrMagnitude;
+        Vector3 hoverPoint = transform.position;
+        if (hoverTarget) hoverPoint = hoverTarget.position;
+        return (hoverPoint - hand.position).sqrMagnitude;
     }
 
-    private bool isClosestPinching()
+    protected bool isClosestPinching()
     {
         return closestHand != null &&
                (closestHand.isLeft ? pinchDetectorLeft.IsActive : pinchDetectorRight.IsActive);
     }
 
-    private bool isClosestHandHolding()
+    protected bool isClosestHandHolding()
     {
         if (closestHand == null) Debug.LogWarning("Closest hand is null");
         return closestHand != null && closestHand.isGraspingObject;
