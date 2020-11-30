@@ -7,13 +7,13 @@ public class ButtonLights : InteractionEventReceiver
     protected override void OnHoverBegin()
     {
         SetOpacity(targetOpacity);
-        Debug.Log("Hover begin");
+        //Debug.Log("Hover begin");
     }
 
     protected override void OnHoverEnd()
     {
         SetOpacity(startOpacity);
-        Debug.Log("Hover end");
+        //Debug.Log("Hover end");
     }
 
     protected override void OnTouch()

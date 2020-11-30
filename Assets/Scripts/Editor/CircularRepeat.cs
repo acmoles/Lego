@@ -6,6 +6,7 @@ using UnityEditor;
 public class CircularRepeat : ScriptableWizard
 {
     public int copies = 7;
+    public float yOffset = 0.45f;
 
     [MenuItem("Tools/Lego/Circular Repeat")]
     static void CreateWizard()
@@ -15,7 +16,7 @@ public class CircularRepeat : ScriptableWizard
 
     void OnWizardCreate()
     {
-        Repeater(copies);
+        Repeater(copies, yOffset);
     }
 
     void OnWizardUpdate()
@@ -23,7 +24,7 @@ public class CircularRepeat : ScriptableWizard
         helpString = "Please set copy count.";
     }
 
-    static public void Repeater(int copies)
+    static public void Repeater(int copies, float yOffset)
     {
 
     GameObject[] selectedObjects = Selection.gameObjects;
@@ -38,16 +39,16 @@ public class CircularRepeat : ScriptableWizard
         {
             angle += (360f / (copies + 1));
             var a = Quaternion.AngleAxis(angle, Vector3.up);
-            GameObject clone = Instantiate(selected_object, Vector3.zero, a);
+                Vector3 pos = new Vector3(0f, yOffset, 0f);
+                //Vector3 pos = Vector3.zero;
+                GameObject clone = Instantiate(selected_object, pos, a);
             clone.transform.SetParent(selected_object.transform.parent, false);
 
             clone.name = "Ring" + (i + 2);
             var inner = clone.transform.GetChild(0);
             inner.name = "Ring" + (i + 2) + "-Inner";
-            var outer = clone.transform.GetChild(1);
-            TurntableMember to = outer.gameObject.GetComponent<TurntableMember>() as TurntableMember;
-            to.nonMember = true;
-            outer.name = "Ring" + (i + 2) + "-Outer";
+                var outer = clone.transform.GetChild(1);
+                outer.name = "Ring" + (i + 2) + "-Outer";
             }
       }
     }

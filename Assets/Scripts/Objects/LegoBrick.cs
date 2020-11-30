@@ -49,6 +49,7 @@ public class LegoBrick : MonoBehaviour
         {
             if (kinematic) interactionBehaviour.rigidbody.isKinematic = true;
             interactionBehaviour.rigidbody.maxAngularVelocity = 10f;
+            interactionBehaviour.rigidbody.angularDrag = 1f;
             interactionBehaviour.rigidbody.mass = mass;
         }
         else
@@ -57,6 +58,7 @@ public class LegoBrick : MonoBehaviour
             {
                 if (kinematic) rb.isKinematic = true;
                 rb.maxAngularVelocity = 10f;
+                rb.angularDrag = 1f;
                 rb.mass = mass;
             }
         }
@@ -131,7 +133,6 @@ public class LegoBrick : MonoBehaviour
         foreach (var brick in allLegoBricks)
         {
             if (!brick.active) continue;
-            // TODO set brick as inactive if all knobs filled
 
             otherClosestPointToMe = brick.GetComponent<Collider>().ClosestPoint(this.transform.position);
             myClosestPointToOther = GetComponent<Collider>().ClosestPoint(otherClosestPointToMe);
@@ -201,8 +202,9 @@ public class LegoBrick : MonoBehaviour
             {
                 if (hit.bounds.Contains(ghost.transform.TransformPoint(ghostBounds.center)) && hit.gameObject.GetComponent<LegoBrick>() != null)
                 {
-                    Debug.Log("Abort connect on account of ghost/brick intersection. " + hit.gameObject.name);
+                    Debug.Log("Abort connect on account of ghost/brick intersection. To " + hit.gameObject.name + ", from: " + gameObject.name);
                     DestroyGhost();
+                    StopKinematic();
                     return;
                 }
             }
@@ -225,7 +227,7 @@ public class LegoBrick : MonoBehaviour
 
         // Position
 
-        LocalPosition otherClosestKnob = LegoStaticUtils.FindClosestPosition(
+        Connectivity otherClosestKnob = LegoStaticUtils.FindClosestPosition(
             hoverTarget.transform.InverseTransformPoint(myClosestPointToOther),
             hoverTarget.setup.knobs
         );
@@ -236,31 +238,33 @@ public class LegoBrick : MonoBehaviour
         }
         Vector3 otherWorldClosestKnob = hoverTarget.transform.TransformPoint(otherClosestKnob.position);
 
-        LocalPosition myClosestSlot = LegoStaticUtils.FindClosestPosition(
+        Connectivity myClosestSlot = LegoStaticUtils.FindClosestPosition(
             transform.InverseTransformPoint(otherWorldClosestKnob),
             setup.slots
         );
+        if (myClosestSlot == null)
+        {
+            DestroyGhost();
+            return;
+        }
         Vector3 ghostClosestSlot = ghost.transform.TransformPoint(myClosestSlot.position);
 
         if (visualize) Debug.DrawLine(transform.position, ghostClosestSlot, Color.cyan);
         ghost.transform.position += otherWorldClosestKnob - ghostClosestSlot;
 
+
         // Rotation
 
-        // Must always be local xz plane
-        // TODO use (local?) rotation of otherWorldClosestKnob rather than hoverTarget rotation
-        // enabling bricks with side oriented positions.
-
-        // Find closest non-vertical local axis in other to transform.forward
-        Vector3 otherClosestAxis = LegoStaticUtils.ClosestLegoLocalDirection(transform.forward, hoverTarget.transform);
+        // Find closest lego plane local axis in other to transform.forward
+        Vector3 otherClosestAxis = LegoStaticUtils.ClosestLegoLocalDirection(this.transform.forward, hoverTarget.transform, otherClosestKnob.rotation);
         if (visualize)
         {
-            Debug.DrawRay(hoverTarget.transform.position, otherClosestAxis, Color.red);
-            Debug.DrawRay(hoverTarget.transform.position, hoverTarget.transform.up, Color.red);
+            Debug.DrawRay(hoverTarget.transform.position, otherClosestAxis, Color.blue);
+            Debug.DrawRay(hoverTarget.transform.position, otherClosestKnob.directionUp, Color.green);
         }
 
-        // Make that forward direction for LookRotation
-        Quaternion otherLocalRotation = Quaternion.LookRotation(otherClosestAxis, hoverTarget.transform.up);
+        // Make that forward direction for LookRotation (hoverTarget.transform.up)
+        Quaternion otherLocalRotation = Quaternion.LookRotation(otherClosestAxis, hoverTarget.transform.TransformDirection(otherClosestKnob.directionUp));
 
         ghost.transform.rotation = otherLocalRotation;
     }
@@ -323,7 +327,7 @@ public class LegoBrick : MonoBehaviour
 
     public void DisconnectPropagate()
     {
-        foreach (var brick in connectedToMe)
+        foreach (var brick in connectedToMe.ToArray())
         {
             Debug.Log(brick.name + " disconnect propagate!");
             brick.StopKinematic();

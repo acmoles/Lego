@@ -85,7 +85,8 @@ public class Game : Persistable
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
 
-                    CreateOneOfEach();
+                    // CreateOneOfEach();
+                    CreateTestPrefabs();
 
                 } else if (loadedScene.name.Contains("ObjectLevel ") && notInLevel)
                 {
@@ -235,7 +236,22 @@ public class Game : Persistable
         }
     }
 
-    void CreateShape(int index = -1, int materialIndex = 0)
+    void CreateTestPrefabs()
+    {
+        CreateShape(0);
+        CreateShape(1);
+        CreateShape(2);
+        CreateShape(6);
+        CreateShape(8);
+        // Side 47905
+        CreateShape(43);
+        // Side 87087
+        CreateShape(47);
+        // Side 4081
+        CreateShape(37);
+    }
+
+        void CreateShape(int index = -1, int materialIndex = 0)
     {
 
         Shape instance;

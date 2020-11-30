@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LocalPosition
+public class Connectivity
 {
     public Vector3 position;
     public bool available = true;
+    public Vector3 directionUp;
+    public Quaternion rotation;
 }
+
 public static class LegoStaticUtils
 {
-    public static LocalPosition FindClosestPosition(Vector3 targetPosition, List<LocalPosition> listOfPositions)
+    public static Connectivity FindClosestPosition(Vector3 targetPosition, List<Connectivity> listOfPositions)
     {
-        LocalPosition preferredPosition = null;
+        Connectivity preferredPosition = null;
         float closestDistSqrd = float.PositiveInfinity;
         foreach (var gp in listOfPositions)
         {
@@ -25,26 +28,35 @@ public static class LegoStaticUtils
         return preferredPosition;
     }
 
-    public static Vector3 ClosestLegoLocalDirection(Vector3 worldDirection, Transform localTransform)
+    public static Vector3 ClosestLegoLocalDirection(Vector3 worldDirection, Transform localTransform, Quaternion knobRotation)
     {
+        //Vector3[] compass = { localTransform.right, -localTransform.right, localTransform.forward, -localTransform.forward };
 
         // Not up/down since lego plane
-        Vector3[] compass = { localTransform.right, -localTransform.right, localTransform.forward, -localTransform.forward };
+        Vector3[] compass = { Vector3.right, -Vector3.right, Vector3.forward, -Vector3.forward };
 
         var maxDot = -Mathf.Infinity;
         var ret = Vector3.zero;
 
         foreach (Vector3 dir in compass)
         {
-            var t = Vector3.Dot(worldDirection, dir);
+
+            var rotatedDir = knobRotation * dir;
+            rotatedDir = localTransform.TransformDirection(rotatedDir);
+
+
+            var t = Vector3.Dot(worldDirection, rotatedDir);
+            
             if (t > maxDot)
             {
-                ret = dir;
+                ret = rotatedDir;
                 maxDot = t;
             }
         }
 
         return ret;
+
+        // && rotatedDir != worldUpVector && rotatedDir != -worldUpVector
     }
 
     public static Vector3 ClosestWorldAxis(Vector3 v)
@@ -91,6 +103,8 @@ public static class LegoStaticUtils
  */
     public static void SetOccupiedGridPositions(LegoBrick me, LegoBrick other)
     {
+        bool allOccupied = true;
+
         Vector3[] otherKnobs = new Vector3[other.setup.knobs.Count];
         Vector3 pos;
         for (int i = 0; i < other.setup.knobs.Count; i++)
@@ -98,6 +112,9 @@ public static class LegoStaticUtils
             pos = other.setup.knobs[i].position;
             pos = other.transform.TransformPoint(pos);
             otherKnobs[i] = pos;
+            //
+            if (other.setup.knobs[i].available)
+                allOccupied = false;
         }
         Vector3[] mySlots = new Vector3[me.setup.slots.Count];
         for (int i = 0; i < me.setup.slots.Count; i++)
@@ -113,15 +130,24 @@ public static class LegoStaticUtils
             {
                 float testDistance = (otherKnobs[i] - mySlots[j]).magnitude;
                 
-                if (testDistance < me.smallDistance)
+                if (testDistance < other.smallDistance)
                 {
                     //Debug.Log("Distance: " + testDistance);
-                    other.setup.knobs[i].available = !other.setup.knobs[i].available;
+                    other.setup.knobs[i].available = false;
                     //VisualizePosition.Create(null, otherPoints[i], 0.01f);
+                }
+                else
+                {
+                    other.setup.knobs[i].available = true;
                 }
             }
         }
 
+        // Sets on subsequent tests i.e. in coroutine
+        if (allOccupied)
+            other.active = false;
+        else
+            other.active = true;
     }
 
     public static int FindLegoDepth(LegoBrick brick)

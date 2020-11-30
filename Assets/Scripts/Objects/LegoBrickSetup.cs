@@ -10,18 +10,13 @@ public class LegoBrickSetup : MonoBehaviour
     public bool report = false;
     private bool setupComplete = false;
 
-    public List<LocalPosition> knobs;
-    public List<LocalPosition> slots;
+    public List<Connectivity> knobs;
+    public List<Connectivity> slots;
 
     private void OnEnable()
     {
-        Awake();
-    }
-
-    void Awake()
-    {
-        knobs = new List<LocalPosition>();
-        slots = new List<LocalPosition>();
+        knobs = new List<Connectivity>();
+        slots = new List<Connectivity>();
         PopulateConnections();
     }
 
@@ -32,7 +27,7 @@ public class LegoBrickSetup : MonoBehaviour
         if (connectivity)
         {
             string[] allowableKnob = { "knob", "hollowKnob", "hollowKnobFitInPegHole", "knobFitInPegHole" };
-            string[] allowableSlot = { "antiKnob" };
+            string[] allowableSlot = { "antiKnob", "squareAntiKnob" };
             // Find knobs and slots
             foreach (Transform field in connectivity)
             {
@@ -41,13 +36,26 @@ public class LegoBrickSetup : MonoBehaviour
                     Transform knobsList = field;
                     foreach (Transform child in knobsList)
                     {
-                        // TODO update LocalPosition to include a local rotation field
-                        // Calculate it from knobsList rotation (will only have rotation if side-brick)
-                        // This can then be used in Ghosting
-                        LocalPosition knob = new LocalPosition();
-                        knob.position = child.localPosition + knobsList.localPosition;
-                        // Prebake realistic scale
-                        knob.position = transform.GetChild(0).TransformVector(knob.position);
+                        Connectivity knob = new Connectivity();
+
+                        // Hack for rotated knobs
+                        if (knobsList.rotation != Quaternion.identity)
+                        {
+                            Debug.Log("Applying world position to: " + gameObject.name);
+                            knob.position = child.position;
+                        }
+                        else {
+                            knob.position = knobsList.localPosition + child.localPosition;
+                            // Prebake realistic scale
+                            knob.position = transform.GetChild(0).TransformVector(knob.position);
+                        }
+
+                        knob.directionUp = knobsList.up;
+                        if (knob.directionUp != Vector3.up)
+                            //Debug.LogFormat("Knob direction for {0}: {1}", gameObject.name, knob.direction);
+
+                        knob.rotation = knobsList.rotation;
+
                         if (report) Debug.LogFormat("Knob at: {0}", knob.position);
                         if (allowableKnob.Contains(child.name))
                         {
@@ -60,10 +68,11 @@ public class LegoBrickSetup : MonoBehaviour
                     Transform slotsList = field;
                     foreach (Transform child in slotsList)
                     {
-                        LocalPosition slot = new LocalPosition();
-                        slot.position = child.localPosition + slotsList.localPosition;
+                        Connectivity slot = new Connectivity();
+                        slot.position = slotsList.localPosition + child.localPosition;
                         // Prebake realistic scale
                         slot.position = transform.GetChild(0).TransformVector(slot.position);
+
                         if (report) Debug.LogFormat("Slot at: {0}", slot.position);
                         if (allowableSlot.Contains(child.name))
                         {
