@@ -594,7 +594,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73d26a074ee50f5499b62d14469a8d2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverDistance: 0.05
+  hoverDistance: 0.08
   hoverTarget: {fileID: 1815315575}
   closestHand: {fileID: 0}
   closestHandPinchPosition: {x: 0, y: 0, z: 0}
@@ -825,6 +825,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.50000006
+      objectReference: {fileID: 0}
+    - target: {fileID: -9000567333049749003, guid: 3af81ef72724ba44eac5300ac88e9d3a,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.005
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3af81ef72724ba44eac5300ac88e9d3a,
         type: 3}
@@ -3522,6 +3527,7 @@ Transform:
   m_Children:
   - {fileID: 1187018070}
   - {fileID: 1500267943}
+  - {fileID: 1713512738}
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3538,7 +3544,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverDistance: 0.08
-  hoverTarget: {fileID: 1187018070}
+  hoverTarget: {fileID: 1713512738}
   closestHand: {fileID: 0}
   closestHandPinchPosition: {x: 0, y: 0, z: 0}
   closestHandDist: Infinity
@@ -4395,6 +4401,38 @@ MonoBehaviour:
   nonMember: 0
   turntableTrigger: 1
   isTouchingTurntable: 0
+--- !u!1 &1059923095 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3354242457328097565, guid: 3af81ef72724ba44eac5300ac88e9d3a,
+    type: 3}
+  m_PrefabInstance: {fileID: 392218194}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1059923096 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -9000567333049749003, guid: 3af81ef72724ba44eac5300ac88e9d3a,
+    type: 3}
+  m_PrefabInstance: {fileID: 392218194}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1059923097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1059923095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad66579e1c9a05849ab5c7098cb8f198, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sender: {fileID: 340387907}
+  meshRenderer: {fileID: 0}
+  targetOpacity: 0.2
+  highlightSphere: {fileID: 1059923096}
+  lerpSpeed: 10
+  shrinkTime: 5
+  highlightScale: {x: 0.05, y: 0.05, z: 0.05}
+  skinnedMeshRenderer: {fileID: 633758579}
 --- !u!1 &1063600067
 GameObject:
   m_ObjectHideFlags: 0
@@ -5957,6 +5995,36 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1713512737
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1713512738}
+  m_Layer: 0
+  m_Name: HoverTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1713512738
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1713512737}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 636277504}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1729132904
 GameObject:
   m_ObjectHideFlags: 0

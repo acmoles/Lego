@@ -95,7 +95,8 @@ public class InteractionEventHoverSender : InteractionEventSender
         if (!hand.isTracked) return float.PositiveInfinity;
         Vector3 hoverPoint = transform.position;
         if (hoverTarget) hoverPoint = hoverTarget.position;
-        return (hoverPoint - hand.position).sqrMagnitude;
+        Vector3 handPoint = hand.transform.GetChild(2).position; // Pinch position
+        return (hoverPoint - handPoint).sqrMagnitude;
     }
 
     public bool isClosestPinching()

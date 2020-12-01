@@ -283,8 +283,9 @@ public class Dial : InteractionEventHoverSender
 
         //drawSpheres();
 
-        if (closestHand == handLeft && isClosestPinching() && hovered)
-        {
+        //if (closestHand == handLeft && isClosestPinching() && hovered)
+        if (pinchDetectorLeft.IsActive && hovered && !handLeft.isGraspingObject)
+        { // TODO do a check if a lego brick is held?
             if (!rotationHeld)
             {
                 rotationHeld = true;
@@ -295,8 +296,9 @@ public class Dial : InteractionEventHoverSender
             }
             RotateDial(pinchDetectorLeft, startPinchRotationLeft);
         }
-        else if (closestHand == handRight && isClosestPinching() && hovered)
-        {
+        //else if (closestHand == handRight && isClosestPinching() && hovered)
+        else if (pinchDetectorRight.IsActive && hovered && !handRight.isGraspingObject)
+            {
             if (!rotationHeld)
             {
                 rotationHeld = true;
@@ -313,6 +315,7 @@ public class Dial : InteractionEventHoverSender
             if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
             fadeOutCoroutine = FadeUpPositions(false);
             StartCoroutine(fadeOutCoroutine);
+            //_FadeUpPositions(false);
             originalRotation = control.rotation;
         }
     }

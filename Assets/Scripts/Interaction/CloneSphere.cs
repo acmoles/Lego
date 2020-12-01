@@ -8,15 +8,15 @@ using DG.Tweening;
 
 public class CloneSphere : InteractionEventReceiver
 {
-    InteractionEventHoverSender hoverSender;
+    protected InteractionEventHoverSender hoverSender;
     public Transform highlightSphere;
     [Range(0, 100F)]
     public float lerpSpeed = 10f;
     public float shrinkTime = 5f;
     public Vector3 highlightScale = new Vector3(0.1f, 0.1f, 0.1f);
 
-    private Vector3 originalScale;
-    private Vector3 originalPosition;
+    protected Vector3 originalScale;
+    protected Vector3 originalPosition;
 
     protected InteractionHand handRight, handLeft;
     Transform leftPinchPosition, rightPinchPosition;
@@ -59,8 +59,7 @@ public class CloneSphere : InteractionEventReceiver
             {
                 StopCoroutine(coroutine);
                 coroutine = null;
-
-                Debug.Log("Stop: no clone");
+                OnCountdownAbort("update");
             }
 
             highlightSphere.position = Vector3.Lerp(highlightSphere.position, originalPosition, lerpSpeed * Time.deltaTime);
@@ -72,18 +71,33 @@ public class CloneSphere : InteractionEventReceiver
         }
     }
 
+    protected virtual void OnCountdownFinished() 
+    {
+        Debug.Log("Stop: make clone");
+    }
+
+    protected virtual void OnCountdownAbort(string location) 
+    {
+        Debug.Log("Stop: no clone " + location);
+    }
+
     IEnumerator Shrink(float time)
     {
         for (float t = 0.0f; t < 1.0f; t += Time.deltaTime / time)
         {
-            highlightSphere.localScale = Vector3.Lerp(highlightSphere.localScale, originalScale, t);
+            highlightSphere.localScale = Vector3.Lerp(highlightSphere.localScale, originalScale * 2f, t);
 
-            if (t > 0.4f && coroutine != null)
+            if (t > 0.32f && coroutine != null)
             {
                 StopCoroutine(coroutine);
                 coroutine = null;
-
-                Debug.Log("Stop: make clone");
+                OnCountdownFinished();
+            }
+            else if (!hoverSender.hovered && coroutine != null)
+            {
+                StopCoroutine(coroutine);
+                coroutine = null;
+                OnCountdownAbort("hover distance");
             }
             else
             {
@@ -106,7 +120,7 @@ public class CloneSphere : InteractionEventReceiver
     //{
     //}
 
-    protected void SetAlpha(float to, float t = 0.15f)
+    protected virtual void SetAlpha(float to, float t = 0.15f)
     {
         if (meshRenderer.material.HasProperty("_Alpha"))
         {

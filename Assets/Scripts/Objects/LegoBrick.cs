@@ -377,6 +377,7 @@ public class LegoBrick : MonoBehaviour
         {
             Debug.Log("No ghost connecting");
             _connecting = false;
+            StopKinematic();
             return;
         }
 
