@@ -14,12 +14,14 @@ public class InteractionEventHoverSender : InteractionEventSender
     public Transform hoverTarget;
 
     [HideInInspector] public InteractionHand closestHand;
+    [HideInInspector] public Vector3 closestHandPinchPosition;
     [HideInInspector] public float closestHandDist = float.PositiveInfinity;
-    private float dL, dR;
-    private bool handIsClose = false;
+    protected float dL, dR;
+    protected bool handIsClose = false;
 
-    protected bool hovered = false;
-    protected bool pinched = false;
+    [HideInInspector] public bool hovered = false;
+    [HideInInspector] public bool pinched = false;
+    [HideInInspector] public bool holding = false;
 
     protected virtual void Start()
     {
@@ -40,6 +42,8 @@ public class InteractionEventHoverSender : InteractionEventSender
 
         if (dL <= dR) closestHand = handLeft;
         else if (dR < dL) closestHand = handRight;
+
+        closestHandPinchPosition = closestHand.transform.GetChild(2).position;
 
         closestHandDist = Mathf.Min(dL, dR);
         handIsClose = closestHandDist < hoverDistance * hoverDistance;
@@ -67,9 +71,26 @@ public class InteractionEventHoverSender : InteractionEventSender
             pinched = false;
             _OnPinchEnd();
         }
+
+        if (hovered && !holding && isClosestPinching() && isClosestHandHolding())
+        {
+            holding = true;
+            _OnHoldingBegin();
+        }
+
+        if (holding && !isClosestHandHolding())
+        {
+            holding = false;
+            _OnHoldingEnd();
+        }
+
+        if (holding)
+        {
+            _OnHoldingSustain();
+        }
     }
 
-    protected float HandDistance(InteractionHand hand)
+    public float HandDistance(InteractionHand hand)
     {
         if (!hand.isTracked) return float.PositiveInfinity;
         Vector3 hoverPoint = transform.position;
@@ -77,13 +98,13 @@ public class InteractionEventHoverSender : InteractionEventSender
         return (hoverPoint - hand.position).sqrMagnitude;
     }
 
-    protected bool isClosestPinching()
+    public bool isClosestPinching()
     {
         return closestHand != null &&
                (closestHand.isLeft ? pinchDetectorLeft.IsActive : pinchDetectorRight.IsActive);
     }
 
-    protected bool isClosestHandHolding()
+    public bool isClosestHandHolding()
     {
         if (closestHand == null) Debug.LogWarning("Closest hand is null");
         return closestHand != null && closestHand.isGraspingObject;

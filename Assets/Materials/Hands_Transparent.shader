@@ -1,4 +1,4 @@
-Shader "Oculus/Hands_Transparent" { 
+Shader "Custom/Hands_Transparent" { 
      Properties 
      {
        _InnerColor ("Inner Color", Color) = (1.0, 1.0, 1.0, 1.0)

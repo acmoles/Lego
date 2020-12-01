@@ -41,7 +41,7 @@ public class LegoBrickSetup : MonoBehaviour
                         // Hack for rotated knobs
                         if (knobsList.rotation != Quaternion.identity)
                         {
-                            Debug.Log("Applying world position to: " + gameObject.name);
+                            //Debug.Log("Applying world position to: " + gameObject.name);
                             knob.position = child.position;
                         }
                         else {

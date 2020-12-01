@@ -27,7 +27,7 @@ public class Dial : InteractionEventHoverSender
         CreatePositions();
         DialTo(LegoColors.Id.BrightYellow);
 
-        innerColorPropertyId = Shader.PropertyToID("_InnerColor");
+        innerColorPropertyId = Shader.PropertyToID("_Color");
         rimColorPropertyId = Shader.PropertyToID("_RimColor");
     }
 
@@ -129,7 +129,20 @@ public class Dial : InteractionEventHoverSender
     public float fadeUpTime = 0.4f;
     public float restY = -0.004f;
     Transform[] transformsToUpdate;
-    void FadeUpPositions(bool incoming = false)
+    public float fadeOutDelay = 2f;
+    private IEnumerator fadeOutCoroutine;
+    IEnumerator FadeUpPositions(bool incoming = false)
+    {
+        WaitForSeconds wait = new WaitForSeconds(fadeOutDelay);
+        if (incoming)
+        {
+            wait = null;
+        }
+        yield return wait;
+        _FadeUpPositions(incoming);
+    }
+    private bool positionsUp = false;
+    void _FadeUpPositions(bool incoming = false)
     {
         TweenParams tParms = new TweenParams().SetEase(Ease.InExpo);
         float targetY = restY;
@@ -137,6 +150,7 @@ public class Dial : InteractionEventHoverSender
         float currentAlpha = 1f;
         if (incoming)
         {
+            if (positionsUp) return;
             targetY = 0f;
             finalAlpha = 1f;
             currentAlpha = 0f;
@@ -157,6 +171,17 @@ public class Dial : InteractionEventHoverSender
         t.OnUpdate(() =>
         {
             TweenCallback(currentAlpha, targetY, incoming);
+        }).OnComplete(() =>
+        {
+            if (incoming)
+            {
+                positionsUp = true;
+            }
+            else
+            {
+                positionsUp = false;
+            }
+            fadeOutCoroutine = null;
         });
     }
 
@@ -258,23 +283,25 @@ public class Dial : InteractionEventHoverSender
 
         //drawSpheres();
 
-        if (pinchDetectorLeft.IsActive && hovered)
+        if (closestHand == handLeft && isClosestPinching() && hovered)
         {
             if (!rotationHeld)
             {
                 rotationHeld = true;
-                FadeUpPositions(true);
+                if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
+                _FadeUpPositions(true);
                 startPinchRotationLeft = pinchDetectorLeft.Rotation;
                 return;
             }
             RotateDial(pinchDetectorLeft, startPinchRotationLeft);
         }
-        else if (pinchDetectorRight.IsActive && hovered)
+        else if (closestHand == handRight && isClosestPinching() && hovered)
         {
             if (!rotationHeld)
             {
                 rotationHeld = true;
-                FadeUpPositions(true);
+                if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
+                _FadeUpPositions(true);
                 startPinchRotationRight = pinchDetectorRight.Rotation;
                 return;
             }
@@ -283,7 +310,9 @@ public class Dial : InteractionEventHoverSender
         else if (rotationHeld)
         {
             rotationHeld = false;
-            FadeUpPositions(false);
+            if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
+            fadeOutCoroutine = FadeUpPositions(false);
+            StartCoroutine(fadeOutCoroutine);
             originalRotation = control.rotation;
         }
     }

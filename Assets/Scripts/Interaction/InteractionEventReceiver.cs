@@ -13,7 +13,10 @@ public abstract class InteractionEventReceiver : MonoBehaviour
 
 	void Start()
 	{
-		startOpacity = meshRenderer.material.color.a;
+        if (meshRenderer)
+        {
+			startOpacity = meshRenderer.material.color.a;
+		}
 	}
 
 	void OnEnable()
@@ -22,6 +25,9 @@ public abstract class InteractionEventReceiver : MonoBehaviour
 		sender.OnHoverEnd += OnHoverEnd;
 		sender.OnPinchBegin += OnPinchBegin;
 		sender.OnPinchEnd += OnPinchEnd;
+		sender.OnHoldingBegin += OnHoldingBegin;
+		sender.OnHoldingEnd += OnHoldingEnd;
+		sender.OnHoldingSustain += OnHoldingSustain;
 		sender.OnTouch += OnTouch;
 		sender.OnRelease += OnRelease;
 	}
@@ -32,6 +38,9 @@ public abstract class InteractionEventReceiver : MonoBehaviour
 		sender.OnHoverEnd -= OnHoverEnd;
 		sender.OnPinchBegin -= OnPinchBegin;
 		sender.OnPinchEnd -= OnPinchEnd;
+		sender.OnHoldingBegin -= OnHoldingBegin;
+		sender.OnHoldingEnd -= OnHoldingEnd;
+		sender.OnHoldingSustain -= OnHoldingSustain;
 		sender.OnTouch -= OnTouch;
 		sender.OnRelease -= OnRelease;
 	}
@@ -44,6 +53,12 @@ public abstract class InteractionEventReceiver : MonoBehaviour
 
 	protected virtual void OnPinchEnd() {}
 
+	protected virtual void OnHoldingBegin() { }
+
+	protected virtual void OnHoldingEnd() { }
+
+	protected virtual void OnHoldingSustain() { }
+
 	protected virtual void OnTouch() { }
 
 	protected virtual void OnRelease() {}
@@ -55,7 +70,7 @@ public abstract class InteractionEventReceiver : MonoBehaviour
 		c.a = to;
 
 		if (meshRenderer.material.HasProperty("_Color"))
-		{
+        {
 			meshRenderer.material.DOColor(c, t);
 		}
 		else

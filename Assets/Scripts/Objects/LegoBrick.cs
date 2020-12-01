@@ -300,17 +300,16 @@ public class LegoBrick : MonoBehaviour
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
         //SetMass();
         active = true;
-        Debug.Log(gameObject.name + " connection to: " + connectedTo.name);
+        //Debug.Log(gameObject.name + " connection to: " + connectedTo.name);
     }
 
     public void Disconnect(bool propagate = true)
     {
         if (!IsConnected()) {
-            Debug.Log("Not connected!");
             return; 
         }
 
-        Debug.Log(gameObject.name + " disconnection from " + connectedTo.name);
+        //Debug.Log(gameObject.name + " disconnection from " + connectedTo.name);
         _turntableMember.RemoveFromTurntable();
 
         //Destroy(connectionJoint);
@@ -513,7 +512,7 @@ public class LegoBrick : MonoBehaviour
             rb.isKinematic = false;
             if (rb.IsSleeping()) Debug.Log("Stop Kinematic was sleeping " + gameObject.name);
             rb.WakeUp();
-            Debug.Log("Stop Kinematic" + gameObject.name);
+            //Debug.Log("Stop Kinematic" + gameObject.name);
         }
     }
     public void MakeKinematic()
@@ -533,7 +532,7 @@ public class LegoBrick : MonoBehaviour
         {
             rb.isKinematic = true;
             rb.Sleep();
-            Debug.Log("Start Kinematic " + gameObject.name);
+            //Debug.Log("Start Kinematic " + gameObject.name);
         }
     }
 }

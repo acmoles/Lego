@@ -5,7 +5,7 @@ using System;
 
 public abstract class InteractionEventSender : MonoBehaviour
 {
-    public event Action OnHoverBegin, OnHoverEnd, OnPinchBegin, OnPinchEnd, OnTouch, OnRelease;
+    public event Action OnHoverBegin, OnHoverEnd, OnPinchBegin, OnPinchEnd, OnHoldingBegin, OnHoldingEnd, OnHoldingSustain, OnTouch, OnRelease;
 
     // Events prefixed by _ are fired by the sender subclass
     protected virtual void _OnHoverBegin()
@@ -26,6 +26,21 @@ public abstract class InteractionEventSender : MonoBehaviour
     protected virtual void _OnPinchEnd()
     {
         if (OnPinchEnd != null) OnPinchEnd();
+    }
+
+    protected virtual void _OnHoldingBegin()
+    {
+        if (OnHoldingBegin != null) OnHoldingBegin();
+    }
+
+    protected virtual void _OnHoldingEnd()
+    {
+        if (OnHoldingEnd != null) OnHoldingEnd();
+    }
+
+    protected virtual void _OnHoldingSustain()
+    {
+        if (OnHoldingSustain != null) OnHoldingSustain();
     }
 
     protected virtual void _OnTouch()
