@@ -251,7 +251,7 @@ public class Game : Persistable
         CreateShape(37);
     }
 
-        void CreateShape(int index = -1, int materialIndex = 0)
+    public void CreateShape(int index = -1, int materialIndex = 0, Vector3 spawnPositionOverride = new Vector3())
     {
 
         Shape instance;
@@ -267,7 +267,13 @@ public class Game : Persistable
         lb.Init();
 
         Transform t = instance.transform;
-        t.localPosition = SpawnZoneLevel.SpawnPoint;
+        if (spawnPositionOverride == Vector3.zero)
+        {
+            t.localPosition = SpawnZoneLevel.SpawnPoint;
+        } else
+        {
+            t.localPosition = spawnPositionOverride;
+        }
         t.localRotation = UnityEngine.Random.rotation;
 
         Array values = Enum.GetValues(typeof(LegoColors.Id));

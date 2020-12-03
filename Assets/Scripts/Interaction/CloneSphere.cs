@@ -73,6 +73,13 @@ public class CloneSphere : InteractionEventReceiver
 
     protected virtual void OnCountdownFinished() 
     {
+        if (Game.Instance.heldShapes.Count > 0)
+        {
+            foreach (var item in Game.Instance.heldShapes)
+            {
+                Game.Instance.CreateShape(item.ShapeId, 0, item.transform.position);
+            }
+        }
         Debug.Log("Stop: make clone");
     }
 

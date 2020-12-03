@@ -6,6 +6,7 @@ using DG.Tweening;
 public class ColorSphere : CloneSphere
 {
     public SkinnedMeshRenderer skinnedMeshRenderer;
+    public Dial dial;
 
     protected override void Start()
     {
@@ -22,6 +23,14 @@ public class ColorSphere : CloneSphere
     protected override void OnCountdownFinished()
     {
         Debug.Log("Stop: change color");
+        // Set color of held brick(s)
+        if (Game.Instance.heldShapes.Count > 0)
+        {
+            foreach (var item in Game.Instance.heldShapes)
+            {
+                item.SetColor((int)dial.activeColor);
+            }
+        }
     }
 
     protected override void OnCountdownAbort(string location)

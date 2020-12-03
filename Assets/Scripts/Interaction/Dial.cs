@@ -40,7 +40,7 @@ public class Dial : InteractionEventHoverSender
     public float arcWidth = 360f;
     public float sphereScale = 0.005f;
     public float selectedScale = 0.02f;
-    LegoColors.Id activeColor;
+    [HideInInspector] public LegoColors.Id activeColor;
     void CreatePositions()
     {
         positionsList = new Dictionary<LegoColors.Id, GameObject>();
@@ -283,9 +283,8 @@ public class Dial : InteractionEventHoverSender
 
         //drawSpheres();
 
-        //if (closestHand == handLeft && isClosestPinching() && hovered)
-        if (pinchDetectorLeft.IsActive && hovered && !handLeft.isGraspingObject)
-        { // TODO do a check if a lego brick is held?
+        if (pinchDetectorLeft.IsActive && hovered)
+        {
             if (!rotationHeld)
             {
                 rotationHeld = true;
@@ -294,10 +293,14 @@ public class Dial : InteractionEventHoverSender
                 startPinchRotationLeft = pinchDetectorLeft.Rotation;
                 return;
             }
+            if (handLeft.isGraspingObject)
+            {
+                FadeOutImmediate();
+                return;
+            }
             RotateDial(pinchDetectorLeft, startPinchRotationLeft);
         }
-        //else if (closestHand == handRight && isClosestPinching() && hovered)
-        else if (pinchDetectorRight.IsActive && hovered && !handRight.isGraspingObject)
+        else if (pinchDetectorRight.IsActive && hovered)
             {
             if (!rotationHeld)
             {
@@ -307,17 +310,34 @@ public class Dial : InteractionEventHoverSender
                 startPinchRotationRight = pinchDetectorRight.Rotation;
                 return;
             }
+            if (handRight.isGraspingObject)
+            {
+                FadeOutImmediate();
+                return;
+            }
             RotateDial(pinchDetectorRight, startPinchRotationRight);
         }
         else if (rotationHeld)
         {
-            rotationHeld = false;
-            if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
-            fadeOutCoroutine = FadeUpPositions(false);
-            StartCoroutine(fadeOutCoroutine);
-            //_FadeUpPositions(false);
-            originalRotation = control.rotation;
+            FadeOutDelay();
         }
+    }
+
+    void FadeOutDelay()
+    {
+        rotationHeld = false;
+        if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
+        fadeOutCoroutine = FadeUpPositions(false);
+        StartCoroutine(fadeOutCoroutine);
+        originalRotation = control.rotation;
+    }
+
+    void FadeOutImmediate()
+    {
+        rotationHeld = false;
+        if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
+        _FadeUpPositions(false);
+        originalRotation = control.rotation;
     }
 
     private void RotateDial(PinchDetector singlePinch, Quaternion startPinchRotation)
