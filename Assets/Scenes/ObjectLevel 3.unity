@@ -533,7 +533,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73d26a074ee50f5499b62d14469a8d2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverDistance: 0.08
+  hoverDistance: 0.04
   hoverTarget: {fileID: 1815315575}
   closestHand: {fileID: 0}
   closestHandPinchPosition: {x: 0, y: 0, z: 0}
@@ -550,10 +550,12 @@ MonoBehaviour:
   selectedScale: 0.016
   activeColor: 0
   fadeUpTime: 0.4
-  restY: -0.004
+  restY: -0.01
   fadeOutDelay: 1.5
+  positionsUp: 0
   dialBottom: {fileID: 1815315573}
   dialTop: {fileID: 633758579}
+  rotationHeld: 0
 --- !u!4 &340387908
 Transform:
   m_ObjectHideFlags: 0
@@ -562,7 +564,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 340387906}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.108, y: 0, z: -0.2125}
+  m_LocalPosition: {x: -0.13, y: 0, z: -0.2125}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 544576092}
@@ -3488,7 +3490,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 636277503}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.108, y: 0.001, z: -0.2125}
+  m_LocalPosition: {x: 0.13, y: 0.001, z: -0.2125}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1187018070}
@@ -3509,7 +3511,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cefc17b164c936b4f861fdb44fc945e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverDistance: 0.08
+  hoverDistance: 0.04
   hoverTarget: {fileID: 1713512738}
   closestHand: {fileID: 0}
   closestHandPinchPosition: {x: 0, y: 0, z: 0}
@@ -4368,13 +4370,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sender: {fileID: 340387907}
   meshRenderer: {fileID: 0}
-  targetOpacity: 0.2
+  targetOpacity: 0.32
   highlightSphere: {fileID: 1059923096}
   lerpSpeed: 10
   shrinkTime: 5
   highlightScale: {x: 0.05, y: 0.05, z: 0.05}
+  repeatTimout: 1
   skinnedMeshRenderer: {fileID: 633758579}
-  dial: {fileID: 0}
+  dial: {fileID: 340387907}
 --- !u!1 &1063600067
 GameObject:
   m_ObjectHideFlags: 0
@@ -4706,6 +4709,7 @@ MonoBehaviour:
   lerpSpeed: 10
   shrinkTime: 5
   highlightScale: {x: 0.1, y: 0.1, z: 0.1}
+  repeatTimout: 1
 --- !u!23 &1187018072
 MeshRenderer:
   m_ObjectHideFlags: 0

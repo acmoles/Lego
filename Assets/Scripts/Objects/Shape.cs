@@ -136,6 +136,28 @@ public class Shape : Persistable
         }
     }
 
+    [HideInInspector]
+    public static int emissionPropertyId = Shader.PropertyToID("_Emission");
+    public void SetEmission(float emission)
+    {
+        if (sharedPropertyBlock == null)
+        {
+            sharedPropertyBlock = new MaterialPropertyBlock();
+        }
+        // Keep current color
+        sharedPropertyBlock.SetColor(colorPropertyId, this.color);
+        sharedPropertyBlock.SetFloat(emissionPropertyId, emission);
+        foreach (var renderer in renderersToEdit)
+        {
+            renderer.SetPropertyBlock(sharedPropertyBlock);
+        }
+    }
+
+    public void ClearPropertyBlock()
+    {
+        sharedPropertyBlock.Clear();
+    }
+
     public override void Save(DataWriter writer)
     {
         base.Save(writer);

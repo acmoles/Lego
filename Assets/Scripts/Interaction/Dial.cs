@@ -141,7 +141,7 @@ public class Dial : InteractionEventHoverSender
         yield return wait;
         _FadeUpPositions(incoming);
     }
-    private bool positionsUp = false;
+    [HideInInspector] public bool positionsUp = false;
     void _FadeUpPositions(bool incoming = false)
     {
         TweenParams tParms = new TweenParams().SetEase(Ease.InExpo);
@@ -268,7 +268,7 @@ public class Dial : InteractionEventHoverSender
     }
 
     LegoColors.Id lastActiveColor = 0;
-    private bool rotationHeld = false;
+    [HideInInspector] public bool rotationHeld = false;
     protected override void Update()
     {
         base.Update();
@@ -283,7 +283,17 @@ public class Dial : InteractionEventHoverSender
 
         //drawSpheres();
 
-        if (pinchDetectorLeft.IsActive && hovered)
+        if ((handLeft.isGraspingObject || handRight.isGraspingObject) && hovered && positionsUp)
+        {
+            Debug.Log("Fade out immediate");
+            FadeOutImmediate();
+            return;
+        }
+
+        if (pinchDetectorLeft.IsActive && hovered
+            && !isClosestHandHolding()
+            && closestHand == handLeft
+            )
         {
             if (!rotationHeld)
             {
@@ -293,14 +303,12 @@ public class Dial : InteractionEventHoverSender
                 startPinchRotationLeft = pinchDetectorLeft.Rotation;
                 return;
             }
-            if (handLeft.isGraspingObject)
-            {
-                FadeOutImmediate();
-                return;
-            }
             RotateDial(pinchDetectorLeft, startPinchRotationLeft);
         }
-        else if (pinchDetectorRight.IsActive && hovered)
+        else if (pinchDetectorRight.IsActive && hovered
+                 && !isClosestHandHolding()
+                 && closestHand == handRight
+            )
             {
             if (!rotationHeld)
             {
@@ -308,11 +316,6 @@ public class Dial : InteractionEventHoverSender
                 if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
                 _FadeUpPositions(true);
                 startPinchRotationRight = pinchDetectorRight.Rotation;
-                return;
-            }
-            if (handRight.isGraspingObject)
-            {
-                FadeOutImmediate();
                 return;
             }
             RotateDial(pinchDetectorRight, startPinchRotationRight);

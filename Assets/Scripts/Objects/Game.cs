@@ -251,7 +251,7 @@ public class Game : Persistable
         CreateShape(37);
     }
 
-    public void CreateShape(int index = -1, int materialIndex = 0, Vector3 spawnPositionOverride = new Vector3())
+    public void CreateShape(int index = -1, int materialIndex = 0, Vector3 spawnPositionOverride = new Vector3(), int colorId = 0)
     {
 
         Shape instance;
@@ -276,11 +276,19 @@ public class Game : Persistable
         }
         t.localRotation = UnityEngine.Random.rotation;
 
-        Array values = Enum.GetValues(typeof(LegoColors.Id));
-        int randomIndex = UnityEngine.Random.Range(0, values.Length);
-        var randomId = (LegoColors.Id)values.GetValue(randomIndex);
+        if (colorId != 0)
+        {
+            instance.SetColor(colorId);
+        } 
+        else
+        {
+            Array values = Enum.GetValues(typeof(LegoColors.Id));
+            int randomIndex = UnityEngine.Random.Range(0, values.Length);
+            var randomId = (LegoColors.Id)values.GetValue(randomIndex);
+            instance.SetColor((int)randomId);
+        }
+        instance.SetEmission(0f);
 
-        instance.SetColor((int)randomId);
         shapes.Add(instance);
     }
 

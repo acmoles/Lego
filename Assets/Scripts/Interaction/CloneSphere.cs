@@ -30,14 +30,17 @@ public class CloneSphere : InteractionEventReceiver
         originalScale = highlightSphere.localScale;
         originalPosition = highlightSphere.position;
 
-        startOpacity = meshRenderer.sharedMaterial.GetFloat("_Alpha");
+        if (meshRenderer)
+        {
+            startOpacity = meshRenderer.sharedMaterial.GetFloat("_Alpha");
+        }
     }
 
-    private bool countDownActive = false;
+    public float repeatTimout = 1f;
     private IEnumerator coroutine;
     private void Update()
     {
-        if (hoverSender.hovered && hoverSender.isClosestHandHolding())
+        if (ActivateCondition())
         {
             highlightSphere.position = Vector3.Lerp(highlightSphere.position, hoverSender.closestHandPinchPosition, lerpSpeed * Time.deltaTime);
 
@@ -71,15 +74,21 @@ public class CloneSphere : InteractionEventReceiver
         }
     }
 
+    protected virtual bool ActivateCondition()
+    {
+        return hoverSender.hovered && hoverSender.isClosestHandHolding();
+    }
+
     protected virtual void OnCountdownFinished() 
     {
         if (Game.Instance.heldShapes.Count > 0)
         {
             foreach (var item in Game.Instance.heldShapes)
             {
-                Game.Instance.CreateShape(item.ShapeId, 0, item.transform.position);
+                Game.Instance.CreateShape(item.ShapeId, 0, item.transform.position, item.colorID);
             }
         }
+        repeatThreshhold = 0.64f;
         Debug.Log("Stop: make clone");
     }
 
@@ -88,17 +97,18 @@ public class CloneSphere : InteractionEventReceiver
         Debug.Log("Stop: no clone " + location);
     }
 
+    private float repeatThreshhold = 0.32f;
     IEnumerator Shrink(float time)
     {
         for (float t = 0.0f; t < 1.0f; t += Time.deltaTime / time)
         {
             highlightSphere.localScale = Vector3.Lerp(highlightSphere.localScale, originalScale * 2f, t);
 
-            if (t > 0.32f && coroutine != null)
+            if (t > repeatThreshhold && coroutine != null)
             {
+                OnCountdownFinished();
                 StopCoroutine(coroutine);
                 coroutine = null;
-                OnCountdownFinished();
             }
             else if (!hoverSender.hovered && coroutine != null)
             {
@@ -121,10 +131,13 @@ public class CloneSphere : InteractionEventReceiver
     protected override void OnHoldingEnd()
     {
         SetAlpha(startOpacity);
+        repeatThreshhold = 0.32f;
     }
 
-    //protected override void OnHoldingSustain()
+    //protected override void OnHoverEnd()
     //{
+    //    SetAlpha(startOpacity);
+    //    repeatThreshhold = 0.32f;
     //}
 
     protected virtual void SetAlpha(float to, float t = 0.15f)

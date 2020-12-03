@@ -6,6 +6,9 @@ using Leap;
 using Leap.Unity.Interaction;
 using UnityEditor;
 using Leap.Unity;
+using DG.Tweening;
+
+// TODO fix 1x2 brick shell
 
 [SelectionBase]
 [RequireComponent(typeof(Shape))]
@@ -72,7 +75,7 @@ public class LegoBrick : MonoBehaviour
 
     public void Init()
     {
-        // TODO currently used to color brick visual
+        // Currently used to color brick visual
         _shape = GetComponent<Shape>();
         _shape.init();
         setup = GetComponent<LegoBrickSetup>();
@@ -82,19 +85,7 @@ public class LegoBrick : MonoBehaviour
 
     public void onHoverBegin()
     {
-        // TODO on hover highlighting
-
-        //Debug.Log("Same instance? " + (lastLegoBrick == this));
-        //if (lastLegoBrick != this)
-        //{
-        //    lastLegoBrick = this;
-        //}
-        //_shape.SetColor(Color.cyan);
-    }
-
-    public void onHoverEnd()
-    {
-        //_shape.ResetColor();
+        TweenEmission(0.2f, 0.15f);
     }
 
     public InteractionBehaviour interactionBehaviour;
@@ -170,11 +161,25 @@ public class LegoBrick : MonoBehaviour
         }
     }
 
+    public float emissionAmount = 0.5f;
+    float currentEmission = 0f;
     public void onGraspBegin()
     {
-        // TODO on grasp brick highlighting
+        TweenEmission(emissionAmount, 0.15f);
         Disconnect();
         Game.Instance.heldShapes.Add(this._shape);
+    }
+
+    void TweenEmission(float to, float t)
+    {
+        // Need to clear material property block to keep current color
+        Tween tween = DOTween.To(() => { return currentEmission; }, x => { currentEmission = x; }, to, t);
+        tween.OnUpdate(() =>
+        {
+            _shape.SetEmission(currentEmission);
+        }).OnComplete(() => {
+            TweenEmission(0f, 1f);
+        });
     }
 
     public void onGraspStay()
@@ -223,6 +228,13 @@ public class LegoBrick : MonoBehaviour
         {
             return;
         }
+
+        if (ghostRenderer.sharedMaterial.GetFloat("_GlobalAlpha") == 0 && !ghostFadingOut)
+        {
+            ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", 1.0f);
+            Debug.Log("Invisible ghost?");
+        }
+
         hoverTarget = preferredLegoBrick;
 
         // Position
@@ -480,13 +492,30 @@ public class LegoBrick : MonoBehaviour
     {
         if (_ghosting && ghost != null)
         {
-            // TODO fade out ghost
-            _ghosting = false;
-            Destroy(ghost);
-            ghost = null;
-            Destroy(ghostRenderer);
-            ghostRenderer = null;
-            //Debug.Log("Destroy Ghost");
+            FadeGhostAlpha(0f);
+        }
+    }
+
+    private bool ghostFadingOut = false;
+    void FadeGhostAlpha(float to, float t = 0.15f)
+    {
+        if (ghostRenderer.sharedMaterial.HasProperty("_GlobalAlpha"))
+        {
+            ghostFadingOut = true;
+            float currentAlpha = ghostRenderer.sharedMaterial.GetFloat("_GlobalAlpha");
+            Tween tween = DOTween.To(() => { return currentAlpha; }, x => { currentAlpha = x; }, to, t);
+            tween.OnUpdate(() =>
+            {
+                ghostRenderer.sharedMaterial.SetFloat("_GlobalAlpha", currentAlpha);
+            }).OnComplete(() => {
+                _ghosting = false;
+                Destroy(ghost);
+                ghost = null;
+                Destroy(ghostRenderer);
+                ghostRenderer = null;
+                ghostFadingOut = false;
+                Debug.Log("Destroy Ghost");
+            });
         }
     }
 

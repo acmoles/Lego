@@ -10,25 +10,23 @@ public class ColorSphere : CloneSphere
 
     protected override void Start()
     {
-        hoverSender = (InteractionEventHoverSender)sender;
-        handLeft = Game.Instance.handLeft;
-        handRight = Game.Instance.handRight;
-
-        originalScale = highlightSphere.localScale;
-        originalPosition = highlightSphere.position;
-
+        base.Start();
         startOpacity = skinnedMeshRenderer.sharedMaterial.GetFloat("_Alpha");
+    }
+
+    protected override bool ActivateCondition()
+    {
+        return hoverSender.hovered && hoverSender.isClosestHandHolding() && !dial.positionsUp;
     }
 
     protected override void OnCountdownFinished()
     {
         Debug.Log("Stop: change color");
-        // Set color of held brick(s)
         if (Game.Instance.heldShapes.Count > 0)
         {
             foreach (var item in Game.Instance.heldShapes)
             {
-                item.SetColor((int)dial.activeColor);
+                item.SetColor((int)(dial.activeColor));
             }
         }
     }
