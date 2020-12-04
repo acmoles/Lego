@@ -100,7 +100,12 @@ public class CloneSphere : InteractionEventReceiver
         {
             foreach (var item in cachedHeldShapes)
             {
-                Game.Instance.CreateShape(item.ShapeId, 0, item.transform.position, item.colorID);
+                Game.Instance.CreateShape(
+                    item.ShapeId, 0, item.colorID, 
+                    item.transform.position.x,
+                    item.transform.position.y,
+                    item.transform.position.z
+                    );
             }
         }
         repeatThreshhold = 0.64f;

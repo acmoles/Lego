@@ -108,12 +108,17 @@ public class Game : Persistable
                 return;
             }
         }
+        
+        Debug.Log("Loading in build");
         // Else load level 3
-        StartCoroutine(LoadLevel(3));
-        CreateOneOfEach();
+        StartCoroutine(LoadLevel(3, () => {
+            CreateOneOfEach();
+        }));
     }
 
-    IEnumerator LoadLevel(int levelBuildIndex)
+    public delegate void CompletedCallBack();
+
+    IEnumerator LoadLevel(int levelBuildIndex, Action callback = null)
     {
         enabled = false;
         // Would show loader
@@ -132,6 +137,7 @@ public class Game : Persistable
 
         loadedLevelBuildIndex = levelBuildIndex;
         enabled = true;
+        if (callback != null) callback();
     }
 
     IEnumerator UnloadLevels(int[] args)
@@ -256,7 +262,7 @@ public class Game : Persistable
         CreateShape(37);
     }
 
-    public void CreateShape(int index = -1, int materialIndex = 0, Vector3 spawnPositionOverride = new Vector3(), int colorId = 0)
+    public void CreateShape(int index = -1, int materialIndex = 0, int colorId = 0, float x = 0f, float y = 0f, float z = 0f)
     {
 
         Shape instance;
@@ -272,12 +278,12 @@ public class Game : Persistable
         lb.Init();
 
         Transform t = instance.transform;
-        if (spawnPositionOverride == Vector3.zero)
+        if (x != 0f && y != 0f && z != 0f)
         {
-            t.localPosition = SpawnZoneLevel.SpawnPoint;
+            t.localPosition = new Vector3(x, y, z);
         } else
         {
-            t.localPosition = spawnPositionOverride;
+            t.localPosition = SpawnZoneLevel.SpawnPoint;
         }
         t.localRotation = UnityEngine.Random.rotation;
 
