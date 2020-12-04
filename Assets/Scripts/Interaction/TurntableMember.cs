@@ -18,6 +18,8 @@ public class TurntableMember : MonoBehaviour
     {
         // Don't reparent base
         if (gameObject.tag == "TurntableBase") return;
+        // Don't reparent static non-members
+        if (this.nonMember) return;
 
         if (collision.gameObject.TryGetComponent(out TurntableMember member))
         {
@@ -32,9 +34,8 @@ public class TurntableMember : MonoBehaviour
 
             // Don't change parent unless hitting base trigger or already touching member
 
-            //GameObject baseParent = LegoStaticUtils.FindParentWithName(member.gameObject, "Main");
-            //baseParent != null ||
-            if (member.turntableTrigger || member.isTouchingTurntable)
+            //if (member.turntableTrigger || member.isTouchingTurntable)
+            if (member.turntableTrigger)
             {
                 //Debug.Log(gameObject.name + " hit member: " + member.name + " - " + member.turntableTrigger + member.isTouchingTurntable);
                 AddToTurntable();

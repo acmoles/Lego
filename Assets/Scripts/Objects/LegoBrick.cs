@@ -327,9 +327,15 @@ public class LegoBrick : MonoBehaviour
 
         //Destroy(connectionJoint);
 
+        Invoke("DisconnectDelay", 0.1f);
+    }
+
+    void DisconnectDelay()
+    {
         LegoStaticUtils.SetOccupiedGridPositions(this, connectedTo);
 
-        if (propagate && connectedToMe.Count > 0)
+        // propagate && 
+        if (connectedToMe.Count > 0)
         {
             DisconnectPropagate();
         }

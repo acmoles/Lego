@@ -85,8 +85,8 @@ public class Game : Persistable
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
 
-                    // CreateOneOfEach();
-                    CreateTestPrefabs();
+                    CreateOneOfEach();
+                    //CreateTestPrefabs();
 
                 } else if (loadedScene.name.Contains("ObjectLevel ") && notInLevel)
                 {
