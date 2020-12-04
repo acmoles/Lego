@@ -192,7 +192,12 @@ public class Game : Persistable
         {
             NewGame();
             storage.Load(this);
-        } else
+        } 
+        else if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+        else
         {
             for (int i = 1; i <= levelCount; i++)
             {
