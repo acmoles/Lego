@@ -42,7 +42,22 @@ public class CloneSphere : InteractionEventReceiver
     {
         if (ActivateCondition())
         {
-            highlightSphere.position = Vector3.Lerp(highlightSphere.position, hoverSender.closestHandPinchPosition, lerpSpeed * Time.deltaTime);
+            Shape closestHeldShape = null;
+            float closestDistSqrd = float.PositiveInfinity;
+            if (cachedHeldShapes.Count > 0)
+            {
+                foreach (var item in cachedHeldShapes)
+                {
+                    float testDistanceSqrd = (item.transform.position - transform.position).sqrMagnitude;
+                    if (testDistanceSqrd < closestDistSqrd)
+                    {
+                        closestHeldShape = item;
+                        closestDistSqrd = testDistanceSqrd;
+                    }
+                }
+            }
+
+            highlightSphere.position = Vector3.Lerp(highlightSphere.position, closestHeldShape.transform.position, lerpSpeed * Time.deltaTime);
 
             if (coroutine == null && highlightSphere.localScale == highlightScale)
             {
@@ -81,9 +96,9 @@ public class CloneSphere : InteractionEventReceiver
 
     protected virtual void OnCountdownFinished() 
     {
-        if (Game.Instance.heldShapes.Count > 0)
+        if (cachedHeldShapes.Count > 0)
         {
-            foreach (var item in Game.Instance.heldShapes)
+            foreach (var item in cachedHeldShapes)
             {
                 Game.Instance.CreateShape(item.ShapeId, 0, item.transform.position, item.colorID);
             }
@@ -123,15 +138,24 @@ public class CloneSphere : InteractionEventReceiver
         }
     }
 
+    protected HashSet<Shape> cachedHeldShapes = new HashSet<Shape>();
     protected override void OnHoldingBegin()
     {
         SetAlpha(targetOpacity);
+        if (Game.Instance.heldShapes.Count > 0)
+        {
+            foreach (var item in Game.Instance.heldShapes)
+            {
+                cachedHeldShapes.Add(item);
+            }
+        }
     }
 
     protected override void OnHoldingEnd()
     {
         SetAlpha(startOpacity);
         repeatThreshhold = 0.32f;
+        cachedHeldShapes.Clear();
     }
 
     //protected override void OnHoverEnd()

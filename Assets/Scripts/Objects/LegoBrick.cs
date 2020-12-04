@@ -8,8 +8,6 @@ using UnityEditor;
 using Leap.Unity;
 using DG.Tweening;
 
-// TODO fix 1x2 brick shell
-
 [SelectionBase]
 [RequireComponent(typeof(Shape))]
 [RequireComponent(typeof(LegoBrickSetup))]
@@ -83,10 +81,10 @@ public class LegoBrick : MonoBehaviour
         StartCoroutine("UpdateOccupiedGridPositions");
     }
 
-    public void onHoverBegin()
-    {
-        TweenEmission(0.2f, 0.15f);
-    }
+    //public void onHoverBegin()
+    //{
+    //    TweenEmission(0.2f, 0.15f, true);
+    //}
 
     public InteractionBehaviour interactionBehaviour;
 
@@ -165,12 +163,12 @@ public class LegoBrick : MonoBehaviour
     float currentEmission = 0f;
     public void onGraspBegin()
     {
-        TweenEmission(emissionAmount, 0.15f);
+        TweenEmission(emissionAmount, 0.15f, true);
         Disconnect();
         Game.Instance.heldShapes.Add(this._shape);
     }
 
-    void TweenEmission(float to, float t)
+    void TweenEmission(float to, float t, bool reset)
     {
         // Need to clear material property block to keep current color
         Tween tween = DOTween.To(() => { return currentEmission; }, x => { currentEmission = x; }, to, t);
@@ -178,7 +176,10 @@ public class LegoBrick : MonoBehaviour
         {
             _shape.SetEmission(currentEmission);
         }).OnComplete(() => {
-            TweenEmission(0f, 1f);
+            if (reset)
+            {
+                TweenEmission(0f, 1f, false);
+            }
         });
     }
 
