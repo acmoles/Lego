@@ -57,7 +57,7 @@ public class CloneSphere : InteractionEventReceiver
                 }
             }
 
-            highlightSphere.position = Vector3.Lerp(highlightSphere.position, closestHeldShape.transform.position, lerpSpeed * Time.deltaTime);
+            highlightSphere.position = Vector3.Lerp(highlightSphere.position, closestHeldShape.transform.GetChild(0).Find("TrueCenter").position, lerpSpeed * Time.deltaTime);
 
             if (coroutine == null && highlightSphere.localScale == highlightScale)
             {

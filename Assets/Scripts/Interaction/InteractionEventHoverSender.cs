@@ -43,7 +43,7 @@ public class InteractionEventHoverSender : InteractionEventSender
         if (dL <= dR) closestHand = handLeft;
         else if (dR < dL) closestHand = handRight;
 
-        closestHandPinchPosition = closestHand.transform.GetChild(2).position;
+        //closestHandPinchPosition = closestHand.transform.GetChild(2).position;
 
         closestHandDist = Mathf.Min(dL, dR);
         handIsClose = closestHandDist < hoverDistance * hoverDistance;

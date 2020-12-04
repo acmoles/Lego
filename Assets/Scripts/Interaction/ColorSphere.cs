@@ -22,9 +22,9 @@ public class ColorSphere : CloneSphere
     protected override void OnCountdownFinished()
     {
         Debug.Log("Stop: change color");
-        if (Game.Instance.heldShapes.Count > 0)
+        if (cachedHeldShapes.Count > 0)
         {
-            foreach (var item in Game.Instance.heldShapes)
+            foreach (var item in cachedHeldShapes)
             {
                 item.SetColor((int)(dial.activeColor));
             }
