@@ -123,5 +123,17 @@ public class ShapeFactory : ScriptableObject
         return prefabs.Length;
     }
 
+    public Dictionary<string, int> GenerateMapping()
+    {
+        Dictionary<string, int> mapIDs = new Dictionary<string, int>();
+
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            mapIDs[prefabs[i].name] = i;
+        }
+
+        return mapIDs;
+    }
+
 
 }

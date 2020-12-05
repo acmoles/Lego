@@ -29,7 +29,7 @@ public class Game : Persistable
     public InteractionHand handLeft, handRight;
     public int initialSpawn = 10;
     private HashSet<Shape> _heldShapes;
-    public HashSet<Shape> heldShapes
+    public HashSet<Shape> HeldShapes
     {
         get
         {
@@ -40,6 +40,7 @@ public class Game : Persistable
             return _heldShapes;
         }
     }
+    Dictionary<string, int> idMap;
 
     [SerializeField] KeyCode create = KeyCode.C;
     [SerializeField] KeyCode reset = KeyCode.N;
@@ -62,6 +63,7 @@ public class Game : Persistable
     {
         Instance = this;
         shapes = new List<Shape>();
+        idMap = shapeFactory.GenerateMapping();
 
         // Load only the active level in the Editor, or next available level of none
         if (Application.isEditor)
@@ -85,8 +87,7 @@ public class Game : Persistable
                     GetGameLevelFromScene(activeScene).SetActiveSpawnZone();
                     // i.e. don't actually load the level
 
-                    CreateOneOfEach();
-                    //CreateTestPrefabs();
+                    CreateSpecific();
 
                 } else if (loadedScene.name.Contains("ObjectLevel ") && notInLevel)
                 {
@@ -108,11 +109,12 @@ public class Game : Persistable
                 return;
             }
         }
-        
+
         Debug.Log("Loading in build");
         // Else load level 3
         StartCoroutine(LoadLevel(3, () => {
-            CreateOneOfEach();
+            //CreateOneOfEach();
+            CreateSpecific();
         }));
     }
 
@@ -155,7 +157,7 @@ public class Game : Persistable
         }
     }
 
-    GameLevel GetGameLevelFromScene (Scene activeScene)
+    GameLevel GetGameLevelFromScene(Scene activeScene)
     {
         List<GameObject> rootObjects = new List<GameObject>();
         activeScene.GetRootGameObjects(rootObjects);
@@ -198,7 +200,7 @@ public class Game : Persistable
         {
             NewGame();
             storage.Load(this);
-        } 
+        }
         else if (Input.GetKeyDown(KeyCode.Escape))
         {
             Application.Quit();
@@ -247,19 +249,21 @@ public class Game : Persistable
         }
     }
 
-    void CreateTestPrefabs()
+    [SerializeField]
+    Shape[] SpecificBricksToSpawn;
+
+    void CreateSpecific()
     {
-        CreateShape(0);
-        CreateShape(1);
-        CreateShape(2);
-        CreateShape(6);
-        CreateShape(8);
-        // Side 47905
-        CreateShape(43);
-        // Side 87087
-        CreateShape(47);
-        // Side 4081
-        CreateShape(37);
+        foreach (var brick in SpecificBricksToSpawn)
+        {
+            CreateBrick(brick.name);
+        }
+    }
+
+    public void CreateBrick(string name, int materialIndex = 0, int colorId = 0, float x = 0f, float y = 0f, float z = 0f)
+    {
+        int index = idMap[name];
+        CreateShape(index, materialIndex, colorId, x, y, z);
     }
 
     public void CreateShape(int index = -1, int materialIndex = 0, int colorId = 0, float x = 0f, float y = 0f, float z = 0f)
@@ -300,21 +304,6 @@ public class Game : Persistable
         }
         instance.SetEmission(0f);
 
-        shapes.Add(instance);
-    }
-
-    void CreateInPlace(int colorID, Transform target, int index, int materialIndex = 0)
-    {
-        Shape instance = shapeFactory.Get(index, materialIndex);
-
-        LegoBrick lb = instance.GetComponent<LegoBrick>();
-        lb.Init();
-
-        Transform t = instance.transform;
-        t.localPosition = target.position;
-        t.localRotation = target.rotation;
-
-        instance.SetColor(colorID);
         shapes.Add(instance);
     }
 

@@ -19,7 +19,8 @@ public class CloneSphere : InteractionEventReceiver
     protected Vector3 originalPosition;
 
     protected InteractionHand handRight, handLeft;
-    Transform leftPinchPosition, rightPinchPosition;
+
+    protected bool cycledOnce = false;
 
     protected virtual void Start()
     {
@@ -59,7 +60,7 @@ public class CloneSphere : InteractionEventReceiver
 
             highlightSphere.position = Vector3.Lerp(highlightSphere.position, closestHeldShape.transform.GetChild(0).Find("TrueCenter").position, lerpSpeed * Time.deltaTime);
 
-            if (coroutine == null && highlightSphere.localScale == highlightScale)
+            if (coroutine == null && highlightSphere.localScale == highlightScale && !cycledOnce)
             {
                 coroutine = Shrink(shrinkTime);
                 StartCoroutine(coroutine);
@@ -108,23 +109,26 @@ public class CloneSphere : InteractionEventReceiver
                     );
             }
         }
-        repeatThreshhold = 0.64f;
+        //repeatThreshhold = 0.64f;
+        cycledOnce = true;
         Debug.Log("Stop: make clone");
     }
 
     protected virtual void OnCountdownAbort(string location) 
     {
         Debug.Log("Stop: no clone " + location);
+        SetAlpha(targetOpacity);
     }
 
-    private float repeatThreshhold = 0.32f;
+    public float actionThreshhold = 0.25f;
     IEnumerator Shrink(float time)
     {
         for (float t = 0.0f; t < 1.0f; t += Time.deltaTime / time)
         {
             highlightSphere.localScale = Vector3.Lerp(highlightSphere.localScale, originalScale * 2f, t);
+            ShrinkAlpha(0, t);
 
-            if (t > repeatThreshhold && coroutine != null)
+            if (t > actionThreshhold && coroutine != null)
             {
                 OnCountdownFinished();
                 StopCoroutine(coroutine);
@@ -143,13 +147,20 @@ public class CloneSphere : InteractionEventReceiver
         }
     }
 
+    protected virtual void ShrinkAlpha(float target, float t)
+    {
+        float currentAlpha = meshRenderer.sharedMaterial.GetFloat("_Alpha");
+        currentAlpha = Mathf.Lerp(currentAlpha, target, t);
+        meshRenderer.sharedMaterial.SetFloat("_Alpha", currentAlpha);
+    }
+
     protected HashSet<Shape> cachedHeldShapes = new HashSet<Shape>();
     protected override void OnHoldingBegin()
     {
         SetAlpha(targetOpacity);
-        if (Game.Instance.heldShapes.Count > 0)
+        if (Game.Instance.HeldShapes.Count > 0)
         {
-            foreach (var item in Game.Instance.heldShapes)
+            foreach (var item in Game.Instance.HeldShapes)
             {
                 cachedHeldShapes.Add(item);
             }
@@ -159,15 +170,14 @@ public class CloneSphere : InteractionEventReceiver
     protected override void OnHoldingEnd()
     {
         SetAlpha(startOpacity);
-        repeatThreshhold = 0.32f;
+        //repeatThreshhold = 0.25f;
         cachedHeldShapes.Clear();
     }
 
-    //protected override void OnHoverEnd()
-    //{
-    //    SetAlpha(startOpacity);
-    //    repeatThreshhold = 0.32f;
-    //}
+    protected override void OnHoverEnd()
+    {
+        cycledOnce = false;
+    }
 
     protected virtual void SetAlpha(float to, float t = 0.15f)
     {

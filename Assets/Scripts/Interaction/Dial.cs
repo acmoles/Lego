@@ -112,9 +112,9 @@ public class Dial : InteractionEventHoverSender
         //dialTop.SetPropertyBlock(Shape.sharedPropertyBlock);
 
         // Set color of held brick(s)
-        if (Game.Instance.heldShapes.Count > 0)
+        if (Game.Instance.HeldShapes.Count > 0)
         {
-            foreach (var item in Game.Instance.heldShapes)
+            foreach (var item in Game.Instance.HeldShapes)
             {
                 item.SetColor((int)colorID);
             }

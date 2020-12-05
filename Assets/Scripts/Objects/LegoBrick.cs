@@ -165,7 +165,7 @@ public class LegoBrick : MonoBehaviour
     {
         TweenEmission(emissionAmount, 0.15f, true);
         Disconnect();
-        Game.Instance.heldShapes.Add(this._shape);
+        Game.Instance.HeldShapes.Add(this._shape);
     }
 
     void TweenEmission(float to, float t, bool reset)
@@ -190,9 +190,9 @@ public class LegoBrick : MonoBehaviour
 
     public void onGraspEnd()
     {
-        if (Game.Instance.heldShapes.Contains(this._shape))
+        if (Game.Instance.HeldShapes.Contains(this._shape))
         {
-            Game.Instance.heldShapes.Remove(this._shape);
+            Game.Instance.HeldShapes.Remove(this._shape);
         } else
         {
             Debug.LogWarning("Shape missing from list?");
@@ -316,6 +316,7 @@ public class LegoBrick : MonoBehaviour
         //Debug.Log(gameObject.name + " connection to: " + connectedTo.name);
     }
 
+    public float disconnectDelay = 0.5f;
     public void Disconnect(bool propagate = true)
     {
         if (!IsConnected()) {
@@ -327,7 +328,7 @@ public class LegoBrick : MonoBehaviour
 
         //Destroy(connectionJoint);
 
-        Invoke("DisconnectDelay", 0.1f);
+        Invoke("DisconnectDelay", disconnectDelay);
     }
 
     void DisconnectDelay()

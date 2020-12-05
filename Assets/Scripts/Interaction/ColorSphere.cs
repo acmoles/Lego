@@ -29,11 +29,20 @@ public class ColorSphere : CloneSphere
                 item.SetColor((int)(dial.activeColor));
             }
         }
+        cycledOnce = true;
     }
 
     protected override void OnCountdownAbort(string location)
     {
         Debug.Log("Stop: no color change " + location);
+        SetAlpha(targetOpacity);
+    }
+
+    protected override void ShrinkAlpha(float target, float t)
+    {
+        float currentAlpha = skinnedMeshRenderer.sharedMaterial.GetFloat("_Alpha");
+        currentAlpha = Mathf.Lerp(currentAlpha, target, t);
+        skinnedMeshRenderer.sharedMaterial.SetFloat("_Alpha", currentAlpha);
     }
 
     protected override void SetAlpha(float to, float t = 0.15f)
