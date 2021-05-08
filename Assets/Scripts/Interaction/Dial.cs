@@ -203,7 +203,7 @@ public class Dial : InteractionEventHoverSender
 
     void Highlight (GameObject go)
     {
-        go.transform.DOScale(selectedScale, fadeUpTime).SetEase(Ease.OutElastic);
+        go.transform.DOScale(selectedScale, fadeUpTime).SetEase(Ease.OutBack);
     }
 
     void Unhighlight(GameObject go)
@@ -347,17 +347,20 @@ public class Dial : InteractionEventHoverSender
     {
         Vector3 p = singlePinch.Rotation * Vector3.forward;
         p.y = 0;
-        Quaternion currentRotation = Quaternion.LookRotation(p);
+        Quaternion currentRotation = Quaternion.LookRotation(p.normalized);
 
         Vector3 l = startPinchRotation * Vector3.forward;
         l.y = 0;
-        Quaternion startRotation = Quaternion.LookRotation(l);
+        Quaternion startRotation = Quaternion.LookRotation(l.normalized);
 
         Quaternion difference = currentRotation * Quaternion.Inverse(startRotation);
 
         Quaternion target = originalRotation * difference;
 
         control.rotation = Quaternion.Slerp(control.rotation, target, Time.deltaTime * 20f);
+        //Vector3 angles = control.localRotation.eulerAngles;
+        //angles.z = 0;
+        //control.localRotation = Quaternion.Euler(angles);
 
         // Update active color
         activeColor = ClosestPosition(control.forward);
@@ -367,6 +370,7 @@ public class Dial : InteractionEventHoverSender
     {
         activeColor = colorID;
         Vector3 l = positionsList[colorID].transform.localPosition;
+        l.y = 0;
         control.rotation = Quaternion.LookRotation(l, Vector3.up);
         originalRotation = control.rotation;
     }
