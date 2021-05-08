@@ -13,9 +13,12 @@ public class Shape : Persistable
     public Mesh CombinedMesh;
 
     public int colorID = 0;
+    public bool isEye = false;
 
     public void Awake()
     {
+        if (isEye) return;
+
         Transform parentPart = transform.GetChild(0);
         Transform shell = parentPart.Find("Shell");
         if (shell)
@@ -100,6 +103,8 @@ public class Shape : Persistable
 
     public void SetMaterial(Material material, int materialId)
     {
+        if (isEye) return;
+
         foreach (var renderer in renderersToEdit)
         {
             renderer.material = material;
@@ -116,6 +121,7 @@ public class Shape : Persistable
 
     public void SetColor(int colorID)
     {
+        if (isEye) return;
         Color color = LegoColors.GetColour(colorID);
         if (color == null)
         {

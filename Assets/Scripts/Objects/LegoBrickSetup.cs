@@ -27,7 +27,7 @@ public class LegoBrickSetup : MonoBehaviour
         if (connectivity)
         {
             string[] allowableKnob = { "knob", "hollowKnob", "hollowKnobFitInPegHole", "knobFitInPegHole" };
-            string[] allowableSlot = { "antiKnob", "squareAntiKnob" };
+            string[] allowableSlot = { "antiKnob", "squareAntiKnob", "tube" };
             // Find knobs and slots
             foreach (Transform field in connectivity)
             {
