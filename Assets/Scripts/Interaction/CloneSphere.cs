@@ -110,7 +110,7 @@ public class CloneSphere : InteractionEventReceiver
             }
         }
         //repeatThreshhold = 0.64f;
-        cycledOnce = true;
+        //cycledOnce = true;
         Debug.Log("Stop: make clone");
     }
 
