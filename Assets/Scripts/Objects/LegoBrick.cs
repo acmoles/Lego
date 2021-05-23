@@ -206,6 +206,8 @@ public class LegoBrick : MonoBehaviour
 
             foreach (Collider hit in hitColliders)
             {
+                if (_shape.isEye) continue;
+
                 if (hit.bounds.Contains(ghost.transform.TransformPoint(ghostBounds.center)) && hit.gameObject.GetComponent<LegoBrick>() != null)
                 {
                     Debug.Log("Abort connect on account of ghost/brick intersection. To " + hit.gameObject.name + ", from: " + gameObject.name);
