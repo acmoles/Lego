@@ -108,6 +108,7 @@ public class CloneSphere : InteractionEventReceiver
                     item.transform.position.z
                     );
             }
+            SetAlpha(targetOpacity);
         }
         //repeatThreshhold = 0.64f;
         //cycledOnce = true;

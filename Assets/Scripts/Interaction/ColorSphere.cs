@@ -28,6 +28,7 @@ public class ColorSphere : CloneSphere
             {
                 item.SetColor((int)(dial.activeColor));
             }
+            SetAlpha(targetOpacity);
         }
         cycledOnce = true;
     }
