@@ -3282,8 +3282,6 @@ MonoBehaviour:
   - {x: -0.000000030966476, y: 0.023141675, z: -0.000000023166649}
   modelFingerPointing: {x: -0, y: 1, z: -0}
   modelPalmFacing: {x: -1, y: 0, z: 0}
-  setEditorLeapPose: 1
-  deformPositionsState: 0
 --- !u!114 &863526529
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4356,8 +4354,6 @@ MonoBehaviour:
   - {x: -0.0000000018626451, y: 0.0231416, z: -0.000000011175871}
   modelFingerPointing: {x: -0, y: 1, z: -0}
   modelPalmFacing: {x: 1, y: 0, z: 0}
-  setEditorLeapPose: 1
-  deformPositionsState: 0
 --- !u!114 &1116656150
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4431,7 +4427,9 @@ MonoBehaviour:
   _frameOptimization: 0
   _physicsExtrapolation: 1
   _physicsExtrapolationTime: 0.011111111
+  _trackingOptimization: 0
   _workerThreadProfiling: 0
+  _serverNameSpace: Leap Service
   _deviceOffsetMode: 0
   _deviceOffsetYAxis: 0
   _deviceOffsetZAxis: 0.12
@@ -5968,7 +5966,7 @@ MonoBehaviour:
     _handModelManager: {fileID: 1908833332}
     LeftModel: {fileID: 863526528}
     IsLeftToBeSpawned: 0
-    RightModel: {fileID: 0}
+    RightModel: {fileID: 1116656149}
     IsRightToBeSpawned: 0
     IsEnabled: 1
     CanDuplicate: 0

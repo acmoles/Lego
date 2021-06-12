@@ -593,7 +593,7 @@ namespace Leap.Unity.RuntimeGizmos {
       DrawWireArc(end, forward, right, radius, 0.5F, 8);
     }
 
-    public void DrawLineWireCircle(Vector3 center, Vector3 normal, float radius, int numCircleSegments = 16) {
+    private void DrawLineWireCircle(Vector3 center, Vector3 normal, float radius, int numCircleSegments = 16) {
       DrawWireArc(center, normal, Vector3.Slerp(normal, -normal, 0.5F), radius, 1.0F, numCircleSegments);
     }
 
