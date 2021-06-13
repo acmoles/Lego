@@ -22,6 +22,27 @@ public class CloneSphere : InteractionEventReceiver
 
     protected bool cycledOnce = false;
 
+    protected static Dictionary<string, CloneSphere> _allSpheres;
+    public static Dictionary<string, CloneSphere> AllSpheres
+    {
+        get
+        {
+            if (_allSpheres == null)
+            {
+                _allSpheres = new Dictionary<string, CloneSphere>();
+            }
+            return _allSpheres;
+        }
+    }
+    protected virtual string sphereName
+    {
+        get
+        {
+            return "clone";
+        }
+    }
+    public bool active = false;
+
     protected virtual void Start()
     {
         hoverSender = (InteractionEventHoverSender)sender;
@@ -30,6 +51,9 @@ public class CloneSphere : InteractionEventReceiver
 
         originalScale = highlightSphere.localScale;
         originalPosition = highlightSphere.position;
+
+        AllSpheres[sphereName] = this;
+        Debug.Log(AllSpheres[sphereName].sphereName);
 
         if (meshRenderer)
         {
@@ -43,6 +67,8 @@ public class CloneSphere : InteractionEventReceiver
     {
         if (ActivateCondition())
         {
+            AllSpheres[sphereName].active = true;
+
             Shape closestHeldShape = null;
             float closestDistSqrd = float.PositiveInfinity;
             if (cachedHeldShapes.Count > 0)
@@ -92,7 +118,7 @@ public class CloneSphere : InteractionEventReceiver
 
     protected virtual bool ActivateCondition()
     {
-        return hoverSender.hovered && hoverSender.isClosestHandHolding();
+        return hoverSender.hovered && hoverSender.isClosestHandHolding() && !AllSpheres["color"].active;
     }
 
     protected virtual void OnCountdownFinished() 
@@ -113,12 +139,14 @@ public class CloneSphere : InteractionEventReceiver
         //repeatThreshhold = 0.64f;
         //cycledOnce = true;
         Debug.Log("Stop: make clone");
+        AllSpheres[sphereName].active = false;
     }
 
     protected virtual void OnCountdownAbort(string location) 
     {
         Debug.Log("Stop: no clone " + location);
         SetAlpha(targetOpacity);
+        AllSpheres[sphereName].active = false;
     }
 
     public float actionThreshhold = 0.25f;
@@ -171,12 +199,14 @@ public class CloneSphere : InteractionEventReceiver
     protected override void OnHoldingEnd()
     {
         SetAlpha(startOpacity);
+        AllSpheres[sphereName].active = false;
         //repeatThreshhold = 0.25f;
         cachedHeldShapes.Clear();
     }
 
     protected override void OnHoverEnd()
     {
+        AllSpheres[sphereName].active = false;
         cycledOnce = false;
     }
 

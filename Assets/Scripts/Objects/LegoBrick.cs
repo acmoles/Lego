@@ -201,21 +201,21 @@ public class LegoBrick : MonoBehaviour
         // Start connection at Ghost
         if (_ghosting)
         {
-            Bounds ghostBounds = ghost.GetComponent<MeshFilter>().sharedMesh.bounds;
-            Collider[] hitColliders = Physics.OverlapBox(ghost.transform.position, ghostBounds.extents, ghost.transform.rotation, layerMask);
+            //Bounds ghostBounds = ghost.GetComponent<MeshFilter>().sharedMesh.bounds;
+            //Collider[] hitColliders = Physics.OverlapBox(ghost.transform.position, ghostBounds.extents, ghost.transform.rotation, layerMask);
 
-            foreach (Collider hit in hitColliders)
-            {
-                if (_shape.isEye) continue;
+            //foreach (Collider hit in hitColliders)
+            //{
+            //    if (_shape.isEye) continue;
 
-                if (hit.bounds.Contains(ghost.transform.TransformPoint(ghostBounds.center)) && hit.gameObject.GetComponent<LegoBrick>() != null)
-                {
-                    Debug.Log("Abort connect on account of ghost/brick intersection. To " + hit.gameObject.name + ", from: " + gameObject.name);
-                    DestroyGhost();
-                    StopKinematic();
-                    return;
-                }
-            }
+            //    if (hit.bounds.Contains(ghost.transform.TransformPoint(ghostBounds.center)) && hit.gameObject.GetComponent<LegoBrick>() != null)
+            //    {
+            //        Debug.Log("Abort connect on account of ghost/brick intersection. To " + hit.gameObject.name + ", from: " + gameObject.name);
+            //        DestroyGhost();
+            //        StopKinematic();
+            //        return;
+            //    }
+            //}
 
             _connecting = true;
             MakeKinematic();
@@ -524,7 +524,7 @@ public class LegoBrick : MonoBehaviour
                 Destroy(ghostRenderer);
                 ghostRenderer = null;
                 ghostFadingOut = false;
-                Debug.Log("Destroy Ghost");
+                //Debug.Log("Destroy Ghost");
             });
         }
     }

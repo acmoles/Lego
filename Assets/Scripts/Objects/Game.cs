@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.IO;
+using System.Linq;
 using TMPro;
 using Leap.Unity.Interaction;
 using Leap;
@@ -297,7 +298,8 @@ public class Game : Persistable
         } 
         else
         {
-            Array values = Enum.GetValues(typeof(LegoColors.Id));
+            //Array values = Enum.GetValues(typeof(LegoColors.Id));
+            Array values = LegoColors.spawnable.ToArray();
             int randomIndex = UnityEngine.Random.Range(0, values.Length);
             var randomId = (LegoColors.Id)values.GetValue(randomIndex);
             instance.SetColor((int)randomId);

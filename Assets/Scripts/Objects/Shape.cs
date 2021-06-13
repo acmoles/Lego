@@ -14,6 +14,7 @@ public class Shape : Persistable
 
     public int colorID = 0;
     public bool isEye = false;
+    public string isSphereTracking = "none";
 
     public void Awake()
     {
