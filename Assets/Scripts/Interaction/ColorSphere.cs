@@ -7,6 +7,13 @@ public class ColorSphere : CloneSphere
 {
     public SkinnedMeshRenderer skinnedMeshRenderer;
     public Dial dial;
+    protected override string sphereName
+    {
+        get
+        {
+            return "color";
+        }
+    }
 
     protected override void Start()
     {
@@ -16,7 +23,7 @@ public class ColorSphere : CloneSphere
 
     protected override bool ActivateCondition()
     {
-        return hoverSender.hovered && hoverSender.isClosestHandHolding() && !dial.positionsUp;
+        return hoverSender.hovered && hoverSender.isClosestHandHolding() && !dial.positionsUp && !AllSpheres["clone"].active;
     }
 
     protected override void OnCountdownFinished()
@@ -31,12 +38,14 @@ public class ColorSphere : CloneSphere
             SetAlpha(targetOpacity);
         }
         cycledOnce = true;
+        AllSpheres[sphereName].active = false;
     }
 
     protected override void OnCountdownAbort(string location)
     {
         Debug.Log("Stop: no color change " + location);
         SetAlpha(targetOpacity);
+        AllSpheres[sphereName].active = false;
     }
 
     protected override void ShrinkAlpha(float target, float t)
